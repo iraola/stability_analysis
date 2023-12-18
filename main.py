@@ -97,6 +97,13 @@ d_grid = read_data.tempTables(d_grid)
 # # Read simulation configuration parameters from Excel file
 # sim_config = read_data.get_simParam(excel_sys)
 
+#%% READ EXEC FILES WITH SG AND VSC CONTROLLERS PARAMETERS
+
+d_sg = read_data.read_data(excel_sg)
+
+d_vsc = read_data.read_data(excel_vsc)
+
+
 # %% POWER-FLOW
 
 # Receive system status from OPAL
@@ -119,7 +126,7 @@ d_grid, d_pf = fill_d_grid_after_powerflow.fill_d_grid(d_grid, GridCal_grid, d_p
 # %% READ PARAMETERS
 
 # Get parameters of generator units from excel files & compute pu base
-d_grid = parameters.get_params(d_grid, excel_sg, excel_vsc)
+d_grid = parameters.get_params(d_grid, d_sg, d_vsc)
 
 # Assign slack bus and slack element
 d_grid = slack_bus.assign_slack(d_grid)
@@ -152,4 +159,4 @@ T_EIG = small_signal.FEIG(ss_sys, True)
 T_EIG.head
 
 # write to excel
-T_EIG.to_excel(path.join(path_results, "EIG_" + excel + ".xlsx"))
+# T_EIG.to_excel(path.join(path_results, "EIG_" + excel + ".xlsx"))
