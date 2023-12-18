@@ -5,15 +5,15 @@
 
 from os import path, getcwd
 
-from StabilityAnalysis.data import get_data_path
-from StabilityAnalysis.preprocess import preprocess_data, read_data, process_raw, parameters,read_op_data_excel, admittance_matrix
-from StabilityAnalysis.powerflow import GridCal_powerflow, process_powerflow, slack_bus, fill_d_grid_after_powerflow
-from StabilityAnalysis.state_space import generate_NET, build_ss, generate_elements
-from StabilityAnalysis.opal import process_opal
-from StabilityAnalysis.analysis import small_signal
-from StabilityAnalysis.preprocess.utils import *
-from StabilityAnalysis.random_operating_point import random_OP
-from StabilityAnalysis.modify_GridCal_grid import assign_StaticGen_to_grid,assign_PQ_Loads_to_grid
+from stability_analysis.data import get_data_path
+from stability_analysis.preprocess import preprocess_data, read_data, process_raw, parameters,read_op_data_excel, admittance_matrix
+from stability_analysis.powerflow import GridCal_powerflow, process_powerflow, slack_bus, fill_d_grid_after_powerflow
+from stability_analysis.state_space import generate_NET, build_ss, generate_elements
+from stability_analysis.opal import process_opal
+from stability_analysis.analysis import small_signal
+from stability_analysis.preprocess.utils import *
+from stability_analysis.random_operating_point import random_OP
+from stability_analysis.modify_GridCal_grid import assign_StaticGen_to_grid,assign_PQ_Loads_to_grid
 from GridCalEngine.Core.DataStructures import numerical_circuit
 
 # %% SET FILE NAMES AND PATHS
@@ -89,7 +89,7 @@ assign_PQ_Loads_to_grid.assign_PQ_load(GridCal_grid, d_raw_data)
 # %% READ EXCEL FILE
 
 # Read data of grid elements from Excel file
-d_grid, d_grid_0 = read_data.read_data(excel_sys)
+d_grid, d_grid_0 = read_data.read_sys_data(excel_sys)
 
 # TO BE DELETED
 d_grid = read_data.tempTables(d_grid) 

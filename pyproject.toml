@@ -2,7 +2,7 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 [project]
-name = "StabilityAnalysis"
+name = "stability_analysis"
 version = "0.0.1"
 authors = [
     {name="Francesca Rossi", email="francesca.rossi@upc.edu"},

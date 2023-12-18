@@ -3,7 +3,7 @@ import numpy as np
 import re
 import control as ct
 from control.matlab import ss
-from StabilityAnalysis.preprocess import preprocess_data
+from stability_analysis.preprocess import preprocess_data
 
 
 def generate_SS_NET_blocks(d_grid, delta_slk):

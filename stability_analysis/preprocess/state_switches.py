@@ -1,4 +1,4 @@
-from StabilityAnalysis.preprocess import preprocess_data
+from stability_analysis.preprocess import preprocess_data
 
 def set_breaker_state(element, number, new_state, grid, grid_0):
     

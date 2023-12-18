@@ -29,8 +29,8 @@ dades_json = {'SM1': ['1.04'],
 '''
 
 import re
-from StabilityAnalysis.preprocess import state_switches
-from StabilityAnalysis import opal
+from stability_analysis.preprocess import state_switches
+from stability_analysis import opal
 
 def update_OP_from_RT(d_grid, d_grid_0, GridCal_grid, data_old = 'None'):
 

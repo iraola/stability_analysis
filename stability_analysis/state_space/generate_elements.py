@@ -1,5 +1,5 @@
-from StabilityAnalysis.state_space.ss_sg import generate_linearization_point_SG, generate_SG_pu
-from StabilityAnalysis.state_space.ss_vsc import generate_linearization_point_VSC, generate_VSC_pu
+from stability_analysis.state_space.ss_sg import generate_linearization_point_SG, generate_SG_pu
+from stability_analysis.state_space.ss_vsc import generate_linearization_point_VSC, generate_VSC_pu
 
 def generate_SS_elements(d_grid, delta_slk, l_blocks, l_states):
     

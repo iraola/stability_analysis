@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from StabilityAnalysis.state_space import generate_NET
+from stability_analysis.state_space import generate_NET
 
 def update_OP(GridCal_grid, pf_results):
     

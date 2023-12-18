@@ -1,7 +1,7 @@
 import numpy as np
 import control as ct
 from control.matlab import ss
-from StabilityAnalysis.state_space import ss_functions as ssf
+from stability_analysis.state_space import ss_functions as ssf
 
 
 def generate_linearization_point_VSC(d_grid):

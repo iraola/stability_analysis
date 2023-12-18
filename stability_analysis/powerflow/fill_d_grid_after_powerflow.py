@@ -8,7 +8,7 @@ Created on Thu Nov 30 13:00:33 2023
 import numpy as np
 import pandas as pd
 
-from StabilityAnalysis.state_space import generate_NET
+from stability_analysis.state_space import generate_NET
 
 def fill_d_grid(d_grid, GridCal_grid, d_pf, d_raw_data, d_op):
     
