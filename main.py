@@ -33,12 +33,12 @@ excel_data = "IEEE_9"
 excel_op = "OperationData_IEEE_9" 
 
 # IEEE 118 
-# raw = "IEEE118busREE_Winter Solved_mod_PQ"
-# # excel = "IEEE_118bus_TH" # THÉVENIN
-# # excel = "IEEE_118_01" # SG
-# excel = "IEEE_118_FULL" 
-# excel_data = "IEEE_118_FULL" 
-# excel_op = "OperationData_IEEE_118" 
+raw = "IEEE118busREE_Winter Solved_mod_PQ"
+# excel = "IEEE_118bus_TH" # THÉVENIN
+# excel = "IEEE_118_01" # SG
+excel = "IEEE_118_FULL_headers" 
+excel_data = "IEEE_118_FULL" 
+excel_op = "OperationData_IEEE_118" 
 
 # TEXAS 2000 bus
 # raw = "ACTIVSg2000_solved_noShunts"
@@ -51,15 +51,27 @@ excel_sys = path.join(path_data, "cases/" + excel + ".xlsx") #empty
 excel_sg = path.join(path_data, "cases/" + excel_data + "_data_sg.xlsx") 
 excel_vsc = path.join(path_data, "cases/" + excel_data + "_data_vsc.xlsx") 
 excel_op = path.join(path_data, "cases/" + excel_op + ".xlsx") 
+
+#%% READ OPERATION EXCEL FILE
+
+d_op = read_op_data_excel.read_operation_data_excel(excel_op)
+
 # %% READ RAW FILE
 
 # Read raw file
 d_raw_data = process_raw.read_raw(raw_file)
 
-d_raw_data['generator']['Region']=1
-d_raw_data['load']['Region']=1
-d_raw_data['branch']['Region']=1
-d_raw_data['results_bus']['Region']=1
+# For the IEEE 9-bus system
+# d_raw_data['generator']['Region']=1
+# d_raw_data['load']['Region']=1
+# d_raw_data['branch']['Region']=1
+# d_raw_data['results_bus']['Region']=1
+
+# FOR the 118-bus system
+d_raw_data['generator']['Region']=d_op['Generators']['Region']
+d_raw_data['load']['Region']=d_op['Loads']['Region']
+# d_raw_data['branch']['Region']=1
+d_raw_data['results_bus']['Region']=d_op['Buses']['Region']
 
 # Preprocess input raw data to match excel file format
 preprocess_data.preprocess_raw(d_raw_data)
@@ -70,21 +82,61 @@ preprocess_data.preprocess_raw(d_raw_data)
 # Create GridCal Model
 GridCal_grid = GridCal_powerflow.create_model(path_raw, raw_file)
 
-#%% READ OPERATION EXCEL FILE
-
-d_op = read_op_data_excel.read_operation_data_excel(excel_op)
-
 #%% GENERATE RANDOM OPERATING POINT
 
 d_raw_data, d_op= random_OP.random_operating_point(d_op, d_raw_data, GridCal_grid,
-                                             n_reg=1, loads_power_factor=0.95,
-                                             generators_power_factor=0.95,
+                                             n_reg=1, loads_power_factor=1,
+                                             generators_power_factor=1,
                                              all_gfor=False)
               
 #%% MODIFY GRIDCAL_GRID
 
 assign_StaticGen_to_grid.assign_StaticGen(GridCal_grid, d_raw_data, d_op)
 assign_PQ_Loads_to_grid.assign_PQ_load(GridCal_grid, d_raw_data)
+
+#%% 
+
+Y_bus=compute_bus_admittance(118, GridCal_grid.get_branches(),GridCal_grid.get_loads(),False)
+
+G_bus=pd.DataFrame(np.diag(np.real(Y_bus)),columns=['G']).sort_values(by='G',ascending=False) #index starts at 0
+B_bus=pd.DataFrame(abs(np.diag(np.imag(Y_bus))),columns=['B']).sort_values(by='B',ascending=False)
+
+G_gen_bus=G_bus.loc[np.array(d_raw_data['generator']['I'])-1].sort_values(by='G',ascending=False) # bus= index+1
+B_gen_bus=B_bus.loc[np.array(d_raw_data['generator']['I'])-1].sort_values(by='B',ascending=False)
+
+d_raw_data['generator']['Static']=1
+d_raw_data['generator'].loc[d_raw_data['generator'].query('I == 65').index,'Static']=-1 # slack
+
+for bus in list(B_gen_bus.index +1):
+    if bus != 65:
+        d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus').index,'Static']=0
+        
+        GridCal_grid = GridCal_powerflow.create_model(path_raw, raw_file)
+
+        assign_Normal_or_StaticGen(GridCal_grid,d_raw_data['generator'])
+        
+        assign_load(main_circuit, loads_pfi)
+        
+        power_flow = PowerFlowDriver(main_circuit, options)
+        
+        power_flow.run()
+        
+        res=power_flow.results
+        
+        print(res.convergence_reports[0].converged_[0])
+         
+        pf_bus, pf_load, pf_gen=process_GridCal_PF_loadPQ_StaticGen(main_circuit, res, gen_pfi,i)
+         
+        # delta_2=pd.DataFrame()
+        # delta_2['P']=abs(pf_gen['P']-pf_gen['Pg_i'])
+        # delta_2['Q']=abs(pf_gen['Q']-pf_gen['Qg_i'])
+        # delta_2['bus']=pf_gen['bus']
+        
+        # delta_2=delta_2.sort_values(by='Q',ascending=True).reset_index(drop=True)
+        
+        if res.convergence_reports[0].converged_[0] == True:
+            break
+
 
 # %% READ EXCEL FILE
 
