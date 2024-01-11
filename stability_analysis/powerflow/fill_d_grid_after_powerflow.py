@@ -12,6 +12,8 @@ from stability_analysis.state_space import generate_NET
 
 def fill_d_grid(d_grid, GridCal_grid, d_pf, d_raw_data, d_op):
     
+    d_grid=clean_d_grid_df(d_grid)
+    
     d_raw_data= change_d_raw_data_columns_name(d_raw_data)
      
     # Calculate RX loads
@@ -35,6 +37,14 @@ def fill_d_grid(d_grid, GridCal_grid, d_pf, d_raw_data, d_op):
     # d_grid = PF2table(T_nodes, d_grid, pf_gen, GridCal_grid)
     
     return d_grid, d_pf
+
+def clean_d_grid_df(d_grid):
+    
+    for key in d_grid.keys():
+        if key!='gen_names':
+            d_grid[key]=d_grid[key].iloc[:0]
+    
+    return d_grid
 
 def change_d_raw_data_columns_name(d_raw_data):
     
