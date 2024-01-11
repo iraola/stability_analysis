@@ -70,11 +70,14 @@ def assign_GFOL_GFOR(d_raw_data, d_op, case): #GridCal_grid
     d_raw_data['generator']['P_GFOR']= np.array(case[active_power_gfor])
     d_op['Generators']['Snom_GFOR']= d_op['Generators']['Snom_CIG']*np.array(case[active_power_gfor])/np.array(case[active_power_cig])
     
-    no_cig=np.where(np.array(case[active_power_cig])==0)
-    d_op['Generators']['Snom_GFOR'].iloc[no_cig]=0
+    no_gfor=np.where(np.array(case[active_power_gfor])==0)
+    d_op['Generators']['Snom_GFOR'].iloc[no_gfor]=0
     
     d_raw_data['generator']['P_GFOL']=np.array(case[active_power_gfol])
-    d_op['Generators']['Snom_GFOL']= d_op['Generators']['Snom_CIG']-d_op['Generators']['Snom_GFOR']
+    d_op['Generators']['Snom_GFOL']= d_op['Generators']['Snom_CIG']*np.array(case[active_power_gfol])/np.array(case[active_power_cig])
+    
+    no_gfol=np.where(np.array(case[active_power_gfol])==0)
+    d_op['Generators']['Snom_GFOL'].iloc[no_gfol]=0
     
     return d_raw_data, d_op
 
