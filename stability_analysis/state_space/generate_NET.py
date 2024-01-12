@@ -5,7 +5,6 @@ import control as ct
 from control.matlab import ss
 from stability_analysis.preprocess import preprocess_data
 
-
 def generate_SS_NET_blocks(d_grid, delta_slk):
     
     l_blocks = [] # Create list to store subsystems blocks
@@ -46,14 +45,11 @@ def generate_SS_NET_blocks(d_grid, delta_slk):
     
     # Loads
     l_blocks, l_states = build_load(d_grid['T_load'], connect_mtx_PI, d_grid['T_global']['fb'][0], delta_slk, l_blocks, l_states)
-        
-    
+            
     # DC Grid
-    
     # generate_DC_connectivity_matrix
-    # generate_DC_NET
-    print("DC grid SS not implemented yet")
-    
+    l_blocks, l_states = generate_DC_NET(d_grid['T_DC_NET'], l_blocks, l_states)
+        
     return l_blocks, l_states, d_grid
 
 
@@ -148,13 +144,15 @@ def generate_T_nodes(d_grid):
                     emptyCellnotFound = False
                 else:
                     i = i+1
-            T_nodes[f'Element_{i}']=T_nodes[f'Element_{i}'].astype(str)
+            T_nodes.loc[T_nodes['Node'] == T_xx['bus'][xx], f'Element_{i}'] = T_nodes.loc[T_nodes['Node'] == T_xx['bus'][xx], f'Element_{i}'].fillna('')        
             T_nodes.loc[T_nodes['Node'] == T_xx['bus'][xx], f'Element_{i}'] = f"{xx_names[idx]}{int(T_xx['number'][xx])}"
     
     return T_nodes
 
 
 def add_trafo(d_grid, connect_mtx_rl):
+    
+    # REWRITE AFTER MATLAB!
     
     T_NET = d_grid['T_NET']
     T_trafo = d_grid['T_trafo']
@@ -165,7 +163,7 @@ def add_trafo(d_grid, connect_mtx_rl):
         if np.sum(connect_mtx_rl[T_trafo['bus_from'][tf]-1]) > 0 or np.sum(connect_mtx_rl[T_trafo['bus_to'][tf]-1]) > 0:
             connect_mtx_rl[T_trafo['bus_from'][tf]-1, T_trafo['bus_to'][tf]-1] = 1
             connect_mtx_rl[T_trafo['bus_to'][tf]-1, T_trafo['bus_from'][tf]-1] = 1
-            T_NET.loc[len(T_NET)] = [number, T_trafo['bus_from'][tf], T_trafo['bus_to'][tf], T_trafo['R'][tf], T_trafo['X'][tf], 0, T_trafo['L'][tf], T_trafo['C'][tf]]
+            T_NET.loc[len(T_NET)] = [number, T_trafo['bus_from'][tf], T_trafo['bus_to'][tf], T_trafo['R'][tf], T_trafo['X'][tf], 0, 1, T_trafo['L'][tf], T_trafo['C'][tf]]
             number += 1
         else:
             missing.append(tf)
@@ -238,16 +236,15 @@ def get_specific_NET(connect_mtx, T_NET):
 
 
 def generate_general_rl_NET_v3(connect_mtx_rl, rl_T_nodes, PI_T_nodes, rl_T_NET, T_global, l_blocks, l_states):
-    
-    # ---------------------------------------------------
-    # LA DEIXO PER MÉS ENDEVANT. AL 118 NO HI HA BUSOS RL    
-    # ---------------------------------------------------
-        
+            
     if connect_mtx_rl.any():
         # Order the buses of the rl lines
         rl_T_NET = preprocess_data.reorder_buses_lines(rl_T_NET)    
         
-        print("Error: RL grid SS not implemented yet. Cannot build current system")
+        
+        
+        
+        
         
         # Append SS to l_blocks
         
@@ -694,4 +691,12 @@ def build_load(T_load, connect_mtx_PI, f, delta_slk, l_blocks, l_states):
                 l_blocks.append(load)
                 l_states.extend(states)
    
+    return l_blocks, l_states
+
+
+def generate_DC_NET(T_DC_NET, l_blocks, l_states):
+    
+    if not T_DC_NET.empty:
+        raise RuntimeError("DC grid SS not implemented yet")        
+    
     return l_blocks, l_states
