@@ -148,6 +148,7 @@ def generate_T_nodes(d_grid):
                     emptyCellnotFound = False
                 else:
                     i = i+1
+            T_nodes[f'Element_{i}']=T_nodes[f'Element_{i}'].astype(str)
             T_nodes.loc[T_nodes['Node'] == T_xx['bus'][xx], f'Element_{i}'] = f"{xx_names[idx]}{int(T_xx['number'][xx])}"
     
     return T_nodes
