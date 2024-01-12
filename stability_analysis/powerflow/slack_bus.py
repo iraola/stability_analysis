@@ -24,16 +24,16 @@ def delta_slk(d_grid):
             T_XX = T_SG.loc[T_SG['bus'] == bus_slk, :]
             delta_slk = sg_slack(T_XX, row.Sb)
             
-        elif element_slk == 'VSC':
+        elif element_slk == 'GFOR':
             T_VSC = d_grid['T_VSC']
-            num_slk = T_VSC.loc[T_VSC['bus'] == bus_slk, 'number'].values[0]
-            T_XX = T_VSC.loc[['bus'] == bus_slk,:]
-            #delta_slk = gfor_slack(T_XX, T_global)
-            
+            num_slk = T_VSC.loc[(T_VSC['bus'] == bus_slk) & (T_VSC['mode'] == 'GFOR'), 'number'].values[0]
+            T_XX = T_VSC.loc[T_VSC['bus'] == bus_slk,:]
+            delta_slk = gfor_slack(T_XX, row.Sb)
+                 
         elif element_slk == 'user':
             T_user = d_grid['T_user']
             num_slk = T_user.loc[T_user['bus'] == bus_slk, 'number'].values[0]
-            T_XX = T_user.loc[['bus'] == bus_slk,:]
+            T_XX = T_user.loc[T_user['bus'] == bus_slk,:]
             elementName = T_XX['element']
             # delta_slk =  WRITE YOUR OWN CODE
             
@@ -92,6 +92,28 @@ def sg_slack(T_XX, Sb):
 
     return delta_slk
 
+def gfor_slack(T_XX, Sb):
+    
+    Svsc = T_XX['Sb'].values[0]  # GFOR rated power, GFOR power base
+
+    # Data from the power-flow
+    Pvsc0 = T_XX['P'].values[0] * (Sb / Svsc)
+    Qvsc0 = T_XX['Q'].values[0] * (Sb / Svsc)
+    V = T_XX['V'].values[0]/np.sqrt(3)/T_XX['Vbpu_l2g'].values[0] # PCC line-line voltage RMS
+
+    # VSC parameters
+    Rtr = T_XX['Rtr'].values[0]
+    Xtr = T_XX['Xtr'].values[0]
+
+    # Calculation of voltages and currents (REF: NET-POC)
+    Ig = np.conj((Pvsc0 + 1j*Qvsc0) / (3*V))        # Transformer current
+    U = V + Ig * (Rtr + 1j*Xtr)                     # Voltage at capacitor bus
+    theta_in = np.arctan2(np.imag(U), np.real(U))   # angle between POC and capacitor bus
+
+    delta_slk = theta_in  # trafo angle
+
+    return delta_slk    
+
     
 def assign_slack(d_grid):
     slack_bus=d_grid['T_gen'].query('type==0')['bus'].unique()[0]
@@ -104,8 +126,6 @@ def assign_slack(d_grid):
         d_grid['T_global']['ref_element']='SG'
     elif 'GFOR' in slack_bus_gen:
         d_grid['T_global']['ref_element']='GFOR'
-    elif 'GFOL' in slack_bus_gen:
-        d_grid['T_global']['ref_element']='GFOL'
     else:
         raise RuntimeError('Error: missing generator at slack bus')
         
