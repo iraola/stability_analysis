@@ -119,8 +119,15 @@ def fill_GEN(d_grid, d_op, d_raw_data, d_pf, GridCal_grid):
                 d_grid['T_gen'].loc[j,'type']= check_slack(d_grid['T_gen'].loc[j,'bus'], GridCal_grid)
                 j=j+1
                 n=n+1
-                         
+    d_grid=check_no_gen_with_null_P(d_grid)                     
     return d_grid    
+
+def check_no_gen_with_null_P(d_grid):
+    
+    drop_gen=d_grid['T_gen'].query('P == 0').index
+    d_grid['T_gen']=d_grid['T_gen'].drop(drop_gen,axis=0).reset_index(drop=True)
+    
+    return d_grid
 
 def check_slack(gen_bus, GridCal_grid):
     buses=GridCal_grid.get_buses()
