@@ -4,7 +4,7 @@ import random
 
 def generated_operating_point(case,d_raw_data, d_op): #GridCal_grid
     
-    d_raw_data=assign_loads_to_d_raw_data(d_raw_data,case)
+    d_raw_data=assign_loads_to_d_raw_data(d_raw_data, case)
         
     d_raw_data=assign_gens_to_d_raw_data(d_raw_data, case)
         
@@ -29,7 +29,7 @@ def assign_loads_to_d_raw_data(d_raw_data,case):
    
     return d_raw_data
 
-def assign_gens_to_d_raw_data(d_raw_data,case):
+def assign_gens_to_d_raw_data(d_raw_data, case):
    
     case_lables=case.index
 
@@ -44,7 +44,7 @@ def assign_gens_to_d_raw_data(d_raw_data,case):
     
     d_raw_data['generator']['P_CIG']=np.array(case[active_power_cig])
     d_raw_data['generator']['P_SG']=np.array(case[active_power_sg])
-    
+        
     return d_raw_data
 
 
