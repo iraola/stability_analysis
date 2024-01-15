@@ -60,8 +60,8 @@ def assign_PV_or_StaticGen(GridCal_grid,d_raw_data,d_op):
                     
                     gen.Snom=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Snom']
                     gen.P=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
-                    gen.Qmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmax']
-                    gen.Qmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmin']
+                    gen.Qmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmax']#0.4*gen.P#
+                    gen.Qmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmin']#-0.4*gen.P#
                     gen.Pmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmax']
                     gen.Pmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmin']
                     gen.Vset=1
