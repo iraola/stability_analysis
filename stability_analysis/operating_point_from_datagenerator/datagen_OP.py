@@ -83,8 +83,15 @@ def assign_GFOL_GFOR(d_raw_data, d_op, case): #GridCal_grid
 
 def alphas_P(d_raw_data):
     for el in ['SG','GFOR','GFOL']:
-        d_raw_data['generator']['alpha_P_'+el]=d_raw_data['generator']['P_'+el]/d_raw_data['generator']['PG']
         
+        for i in range(len(d_raw_data['generator'])):
+            
+            if np.any(d_raw_data['generator'].loc[i,'PG']==0):
+                
+                d_raw_data['generator'].loc[i,'alpha_P_'+el]=0
+            else:
+                d_raw_data['generator'].loc[i,'alpha_P_'+el]=d_raw_data['generator'].loc[i,'P_'+el]/d_raw_data['generator'].loc[i,'PG']
+            
     return d_raw_data
             
 
