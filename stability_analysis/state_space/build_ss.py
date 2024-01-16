@@ -24,7 +24,7 @@ def select_io(l_blocks,varin,varout):
     else:
         valid_output = [var in outputNames for var in varout]
         if not all(valid_output):
-            print("output is not valid")  
+            raise RuntimeError("output is not valid")  
 
     return varin, varout 
 

@@ -61,10 +61,13 @@ def calculate_R_X_loads(T_load, pf_load, GridCal_grid):
     T_load['P'] = pf_load["P"]
     T_load['Q'] = pf_load["Q"]
     
-    T_load= Load_type(T_load, GridCal_grid)
-    
+    T_load = Load_type(T_load, GridCal_grid)
+   
+    # Set R,X columns type to float64
+    T_load[['R','X']] = T_load[['R','X']].astype('float64')
     T_load.loc[T_load["type"] == "PQ", "R"] = T_load.loc[T_load["type"] == "PQ", "V"] ** 2 / T_load.loc[T_load["type"] == "PQ", "P"]
     T_load.loc[T_load["type"] == "PQ", "X"] = T_load.loc[T_load["type"] == "PQ", "V"] ** 2 / T_load.loc[T_load["type"] == "PQ", "Q"]  
+
     return T_load
 
 def Load_type(T_load, GridCal_grid):
@@ -223,24 +226,24 @@ def PF2table(T_nodes, d_grid, pf_gen, GridCal_grid):
                  # if single_gen = True --> keep P
                  # if single_gen = False --> T_case.loc[T_case['bus'] = bus, f'  ']
                                 
-                 if xx == 'VSC':
-                     P = [Pt.loc[idx,'P'] if T_nodes.loc[T_nodes['Node'] == Pt.loc[idx,'bus'], 'single_gen'].bool() 
-                          else Pt.loc[idx,'P']*T_case.loc[T_case['bus'] == Pt.loc[idx,'bus'], f'{T_xx["mode"][idx]}'].values[0] for idx in Pt.index]
+                 if xx == 'VSC':                     
+                     P = [Pt.loc[idx,'P'] if T_nodes.loc[T_nodes['Node'] == Pt.loc[idx,'bus'], 'single_gen'].values[0] == True
+                         else Pt.loc[idx,'P']*T_case.loc[T_case['bus'] == Pt.loc[idx,'bus'], f'{T_xx["mode"][idx]}'].values[0] for idx in Pt.index]                    
                    
-                     Q = [Qt.loc[idx,'Q'] if T_nodes.loc[T_nodes['Node'] == Qt.loc[idx,'bus'], 'single_gen'].bool() 
+                     Q = [Qt.loc[idx,'Q'] if T_nodes.loc[T_nodes['Node'] == Qt.loc[idx,'bus'], 'single_gen'].values[0] == True
                           else Qt.loc[idx,'Q']*T_case.loc[T_case['bus'] == Qt.loc[idx,'bus'], f'{T_xx["mode"][idx]}'].values[0] for idx in Qt.index]   
                      
-                     Sn_scaled = [Sn.loc[idx,'Sn'] if T_nodes.loc[T_nodes['Node'] == Sn.loc[idx,'bus'], 'single_gen'].bool() 
+                     Sn_scaled = [Sn.loc[idx,'Sn'] if T_nodes.loc[T_nodes['Node'] == Sn.loc[idx,'bus'], 'single_gen'].values[0] == True
                                  else Sn.loc[idx,'Sn']*T_case.loc[T_case['bus'] == Sn.loc[idx,'bus'], f'{T_xx["mode"][idx]}'].values[0] for idx in Sn.index]  
                      
                  else:            
-                     P = [Pt.loc[idx,'P'] if T_nodes.loc[T_nodes['Node'] == Pt.loc[idx,'bus'], 'single_gen'].bool() 
+                     P = [Pt.loc[idx,'P'] if T_nodes.loc[T_nodes['Node'] == Pt.loc[idx,'bus'], 'single_gen'].values[0] == True 
                           else Pt.loc[idx,'P']*T_case.loc[T_case['bus'] == Pt.loc[idx,'bus'], f'{xx}'].values[0] for idx in Pt.index]
                    
-                     Q = [Qt.loc[idx,'Q'] if T_nodes.loc[T_nodes['Node'] == Qt.loc[idx,'bus'], 'single_gen'].bool() 
+                     Q = [Qt.loc[idx,'Q'] if T_nodes.loc[T_nodes['Node'] == Qt.loc[idx,'bus'], 'single_gen'].values[0] == True
                           else Qt.loc[idx,'Q']*T_case.loc[T_case['bus'] == Qt.loc[idx,'bus'], f'{xx}'].values[0] for idx in Qt.index]    
                      
-                     Sn_scaled = [Sn.loc[idx,'Sn'] if T_nodes.loc[T_nodes['Node'] == Sn.loc[idx,'bus'], 'single_gen'].bool() 
+                     Sn_scaled = [Sn.loc[idx,'Sn'] if T_nodes.loc[T_nodes['Node'] == Sn.loc[idx,'bus'], 'single_gen'].values[0] == True 
                                  else Sn.loc[idx,'Sn']*T_case.loc[T_case['bus'] == Sn.loc[idx,'bus'], f'{xx}'].values[0] for idx in Sn.index]                                  
                 
             else:

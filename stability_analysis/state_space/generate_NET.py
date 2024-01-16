@@ -102,32 +102,36 @@ def generate_T_nodes(d_grid):
     T_MMC = d_grid['T_MMC']
     T_user = d_grid['T_user']
      
-    # Nodes specification:
-    tn = max(T_NET['bus_from'].max(), T_NET['bus_to'].max(), T_trafo['bus_from'].max(), T_trafo['bus_to'].max())  # Total node number
+    # Create empty T_nodes dataframe
+    # Size: sz = (tn, nsb+1)
+    # Columns: Node (int64), Element_n (str)
     
+    # Total node number 
+    tn = max(T_NET['bus_from'].max(), T_NET['bus_to'].max(), T_trafo['bus_from'].max(), T_trafo['bus_to'].max())     
     nsb = np.zeros(tn)
     for node in range(1, tn+1):
         nsb[node-1] = sum([T_load['bus'].eq(node).sum(), T_TH['bus'].eq(node).sum(), T_SG['bus'].eq(node).sum(), 
                           T_VSC['bus'].eq(node).sum(), T_MMC['NodeAC'].eq(node).sum(),T_user['bus'].eq(node).sum()])
     nsb = int(max(nsb))
-    
-    sz = (tn, nsb+1)  # Table size
-    data = np.empty(sz)
-    data.fill(np.nan)
-    varNames = ['Node'] + [f'Element_{i}' for i in range(1, nsb+1)]
-    T_nodes = pd.DataFrame(data, columns=varNames)
+         
+    init_nodes = np.zeros([tn,1], dtype = int)  # Initialize column Node
+    init_elements = np.empty([tn,nsb], dtype = str) # Initialize columns Element_n    
+    df_nodes = pd.DataFrame(init_nodes, columns=['Node'])
+    df_elements = pd.DataFrame(init_elements, columns=[f'Element_{i}' for i in range(1, nsb+1)])
+    T_nodes = pd.concat([df_nodes, df_elements], axis=1)    
         
-    # Assign values to the T_nodes table
+    # Assign values to the T_nodes dataframe
     T_nodes['Node'] = range(1, tn+1)
         
     for mmc in range(len(T_MMC)):
         emptyCellnotFound = True
         i = 1
         while(emptyCellnotFound):
-            if pd.isna(T_nodes.loc[T_nodes['Node'] == T_MMC['NodeAC'][mmc], f'Element_{i}']).any(): #cell not empty
+            if (T_nodes.loc[T_nodes['Node'] == T_MMC['NodeAC'][mmc], f'Element_{i}'] == '').any(): #cell not empty
                 emptyCellnotFound = False
             else:
                 i = i+1
+        # Assign element name
         T_nodes.loc[T_nodes['Node'] == T_MMC['NodeAC'][mmc], f'Element_{i}'] = f"MMC{int(T_MMC['number'][mmc])}"
         
                 
@@ -140,11 +144,11 @@ def generate_T_nodes(d_grid):
             emptyCellnotFound = True
             i = 1
             while(emptyCellnotFound):
-                if pd.isna(T_nodes.loc[T_nodes['Node'] == T_xx['bus'][xx], f'Element_{i}']).any(): #cell not empty
+                if (T_nodes.loc[T_nodes['Node'] == T_xx['bus'][xx], f'Element_{i}'] == '').any(): #cell not empty
                     emptyCellnotFound = False
                 else:
                     i = i+1
-            T_nodes.loc[T_nodes['Node'] == T_xx['bus'][xx], f'Element_{i}'] = T_nodes.loc[T_nodes['Node'] == T_xx['bus'][xx], f'Element_{i}'].fillna('')        
+            # Assign element name
             T_nodes.loc[T_nodes['Node'] == T_xx['bus'][xx], f'Element_{i}'] = f"{xx_names[idx]}{int(T_xx['number'][xx])}"
     
     return T_nodes
@@ -374,7 +378,7 @@ def generate_general_PI_NET(connect_mtx_PI, connect_mtx_rl, PI_T_nodes, T_trafo_
                 PI_T_nodes_row = PI_T_nodes.loc[PI_T_nodes['Node'] == ii+1]
                 for column in PI_T_nodes_row.columns[1:]:
                     value = PI_T_nodes_row[column]
-                    if not pd.isna(value.values[0]):
+                    if not (value.values[0] == ''):
                         match = re.match(r'([A-Za-z]+)(\d+)', value.values[0])
                         element = match.group(1)
                         number = match.group(2)

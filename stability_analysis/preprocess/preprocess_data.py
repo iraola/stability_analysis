@@ -271,5 +271,6 @@ def raw2excel(d_raw_data,excel_raw):
         for name, df in d_raw_data.items():        
             df.to_excel(writer, sheet_name=name, header=True, index=False)       
 
-    print("UserWarning:: You should now fill the system excel file")
-    print(f"--> Raw excel file is in: {excel_raw}")                       
+    print("WARNING: You should now create the MAIN excel file from RAW excel file")
+    print(f"RAW excel file is found in: {excel_raw}") 
+    print("MAIN excel file should be in: /tool/data/cases/")                        

@@ -187,7 +187,7 @@ def read_raw(raw_file):
             if not data_name:
                 notEOF = False
             
-    print('UserInfo:: .raw data has been read')
+    #print('STATUS: .raw data has been read')
         
     raw_data = {
     'data_global': data_global,

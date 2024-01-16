@@ -668,25 +668,6 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC):
                 k_droop_u = row['k_droop_u']                
                    
         
-                # ROTATION MATRICES
-                
-                # REF INVERSE transform: vc_c to vc (local -> global)
-                vc_l2g = ssf.SS_ROTATE(e_theta0, vc_qc0, vc_dc0, "l2g", ['vc_qc','vc_dc', 'e_theta'], ['vc_q','vc_d'])
-                ss_list.append(vc_l2g) 
-                
-                # REF transform: ig to ig_c (global -> local)
-                ig_g2l = ssf.SS_ROTATE(e_theta0, ig_q0, ig_d0, "g2l", [ig_q, ig_d, 'e_theta'], ['ig_qc','ig_dc'])
-                ss_list.append(ig_g2l)   
-                
-                # REF transform: is to is_c (global -> local)
-                is_g2l = ssf.SS_ROTATE(e_theta0, is_q0, is_d0, "g2l", [is_q, is_d, 'e_theta'], ['is_qc', 'is_dc'])
-                ss_list.append(is_g2l)               
-                
-                # REF transform: u to u_c (global -> local)
-                u_g2l = ssf.SS_ROTATE(e_theta0, u_q0, u_d0, "g2l", [u_q, u_d, 'e_theta'], ['u_qc','u_dc'])
-                ss_list.append(u_g2l)               
-                
-                
                 # BASE CHANGE      
                 
                 # Change base of voltage: system -> vsc
@@ -713,9 +694,13 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC):
                 i_pu = ss(Ai_pu, Bi_pu, Ci_pu, Di_pu, inputs=i_pu_u, outputs=i_pu_y)        
                 ss_list.append(i_pu)  
                 
-                # ANGLE DEVIATION
                 
-                if not (num==num_slk and element_slk == 'GFOR'):      
+                # ANGLE AND ROTATIONS
+
+                
+                if not (num==num_slk and element_slk == 'GFOR'):     
+                    
+                    # ANGLE DEVIATION
                     
                     # Angle deviation from system reference
                     Adang = np.array([[0]])   
@@ -731,20 +716,59 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC):
                     ss_list.append(dang)  
                     x_list.extend(dang_x)  
                     
-                else:                             
-                                
-                    # Angle deviation from system reference (if slack)
-                    Adang = np.array([[0]]) 
-                    Bdang = np.array([[1]]) 
-                    Cdang = np.array([[0]])
-                    Ddang = np.array([[0]])  
+                    # ROTATION MATRICES
                     
-                    dang_x = [etheta_x]
-                    dang_u = [w_vsc]
-                    dang_y = ['e_theta']
-                    dang = ss(Adang, Bdang, Cdang, Ddang, states = dang_x, inputs = dang_u, outputs = dang_y)              
-                    ss_list.append(dang)  
-                    x_list.extend(dang_x) 
+                    # REF INVERSE transform: vc_c to vc (local -> global)
+                    vc_l2g = ssf.SS_ROTATE(e_theta0, vc_qc0, vc_dc0, "l2g", ['vc_qc','vc_dc', 'e_theta'], ['vc_q','vc_d'])
+                    ss_list.append(vc_l2g) 
+                    
+                    # REF transform: ig to ig_c (global -> local)
+                    ig_g2l = ssf.SS_ROTATE(e_theta0, ig_q0, ig_d0, "g2l", [ig_q, ig_d, 'e_theta'], ['ig_qc','ig_dc'])
+                    ss_list.append(ig_g2l)   
+                    
+                    # REF transform: is to is_c (global -> local)
+                    is_g2l = ssf.SS_ROTATE(e_theta0, is_q0, is_d0, "g2l", [is_q, is_d, 'e_theta'], ['is_qc', 'is_dc'])
+                    ss_list.append(is_g2l)               
+                    
+                    # REF transform: u to u_c (global -> local)
+                    u_g2l = ssf.SS_ROTATE(e_theta0, u_q0, u_d0, "g2l", [u_q, u_d, 'e_theta'], ['u_qc','u_dc'])
+                    ss_list.append(u_g2l)      
+                    
+                else:
+                    
+                    # ANGLE DEVIATION --> ALGEBRAIC LOOP if uneeded etheta_x exists
+                    
+                    # Angle deviation from system reference (if slack)
+                    
+                    # Adang = np.array([[0]]) 
+                    # Bdang = np.array([[1]]) 
+                    # Cdang = np.array([[0]])
+                    # Ddang = np.array([[0]])  
+                    
+                    # dang_x = [etheta_x]
+                    # dang_u = [w_vsc]
+                    # dang_y = ['e_theta']
+                    # dang = ss(Adang, Bdang, Cdang, Ddang, states = dang_x, inputs = dang_u, outputs = dang_y)              
+                    # ss_list.append(dang)  
+                    # x_list.extend(dang_x) 
+                    
+                    # ROTATION MATRICES
+                    
+                    # REF INVERSE transform: vc_c to vc (local -> global)
+                    vc_l2g = SS_ROTATE_SLACK(e_theta0, "l2g", ['vc_qc','vc_dc'], ['vc_q','vc_d'])
+                    ss_list.append(vc_l2g) 
+                    
+                    # REF transform: ig to ig_c (global -> local)
+                    ig_g2l = SS_ROTATE_SLACK(e_theta0, "g2l", [ig_q, ig_d], ['ig_qc','ig_dc'])
+                    ss_list.append(ig_g2l)   
+                    
+                    # REF transform: is to is_c (global -> local)
+                    is_g2l = SS_ROTATE_SLACK(e_theta0, "g2l", [is_q, is_d], ['is_qc', 'is_dc'])
+                    ss_list.append(is_g2l)               
+                    
+                    # REF transform: u to u_c (global -> local)
+                    u_g2l = SS_ROTATE_SLACK(e_theta0, "g2l", [u_q, u_d], ['u_qc','u_dc'])
+                    ss_list.append(u_g2l)   
                     
     
                 # OUTTER LOOPS
@@ -884,7 +908,10 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC):
                 ss_list.append(Lc_ss)
                 x_list.extend(lc_x)          
    
+    
                 # BUILD COMPLETE MODEL  
+                
+                
                 if (num==num_slk and element_slk == 'GFOR'):  
                     input_vars = ['vg_sys_q','vg_sys_d']
                     output_vars = [iq, id, w_vsc]
@@ -898,7 +925,12 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC):
                 input_labels = SS_GFOR.input_labels
                 input_labels[0] = vnXq
                 input_labels[1] = vnXd
-                SS_GFOR.input_labels = input_labels           
+                SS_GFOR.input_labels = input_labels      
+                
+                if (num==num_slk and element_slk == 'GFOR'):  
+                    output_labels = SS_GFOR.output_labels
+                    output_labels[2] = REF_w
+                    SS_GFOR.output_labels = output_labels     
                 
                 # append ss to l_blocks
                 l_blocks.append(SS_GFOR)
@@ -907,3 +939,20 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC):
     return l_blocks, l_states
 
 
+# %% ROTATION FOR SLACK
+
+def SS_ROTATE_SLACK(etheta_0, direction, u, y):
+    
+    if direction == "g2l":
+        k = -1
+    elif direction == "l2g":
+        k = 1
+
+    A = np.empty(0)
+    B = np.empty((0, 2))
+    C = np.empty((0, 2))
+    D = np.array([[np.cos(etheta_0), k * np.sin(etheta_0)],
+                  [-k * np.sin(etheta_0), np.cos(etheta_0)]])
+    
+    ss_rot = ss(A, B, C, D, inputs = u, outputs = y) 
+    return ss_rot
