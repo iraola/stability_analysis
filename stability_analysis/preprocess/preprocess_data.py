@@ -273,4 +273,4 @@ def raw2excel(d_raw_data,excel_raw):
 
     print("WARNING: You should now create the MAIN excel file from RAW excel file")
     print(f"RAW excel file is found in: {excel_raw}") 
-    print("MAIN excel file should be in: /tool/data/cases/")                        
+    print("MAIN excel file should be created in: /tool/data/cases/")                          

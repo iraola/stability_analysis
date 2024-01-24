@@ -207,8 +207,17 @@ ss_sys = build_ss.connect(l_blocks, l_states, inputs, outputs)
 
 # %% SMALL-SIGNAL ANALYSIS
 
-T_EIG = small_signal.FEIG(ss_sys, True)
-T_EIG.head
+# Eigenvalues
 
-# write to excel
-# T_EIG.to_excel(path.join(path_results, "EIG_" + excel + ".xlsx"))
+T_EIG = small_signal.FEIG(ss_sys, plot=True)
+T_EIG.head
+#T_EIG.to_excel(path.join(path_results, "EIG_" + excel + ".xlsx")) # Write T_EIG to excel
+
+# Participation factors
+
+# Obtain all participation factors
+df_PF = small_signal.FMODAL(ss_sys, plot=False)
+# Obtain the participation factors for the selected modes
+T_modal, df_PF = small_signal.FMODAL_REDUCED(ss_sys, plot=True, modeID = [1,3,11])
+# Obtain the participation factors >= tol, for the selected modes
+T_modal, df_PF = small_signal.FMODAL_REDUCED_tol(ss_sys, plot=True, modeID = [1,3,11], tol = 0.3)
