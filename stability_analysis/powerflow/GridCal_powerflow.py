@@ -15,19 +15,20 @@ def create_model(path_raw,name_raw):
     grid = FileOpen(raw_file).open()
     return grid
     
-def run_powerflow(grid):
+def run_powerflow(grid,solver_type=SolverType.NR, Qconrol_mode=ReactivePowerControlMode.NoControl):
             
     # RUN POWERFLOW
-    for solver_type in [SolverType.NR]: #, SolverType.IWAMOTO, SolverType.LM, SolverType.FASTDECOUPLED]:
+    # for solver_type in [SolverType.IWAMOTO]: #, SolverType.IWAMOTO, SolverType.LM, SolverType.FASTDECOUPLED]:
     
-        print(solver_type)
-    
-        options = PowerFlowOptions(solver_type,
-                                   verbose=False,
-                                   initialize_with_existing_solution=False,
-                                   retry_with_other_methods=False,
-                                   ignore_single_node_islands = True,
-                                   tolerance = 1e-10)
+    print(solver_type)
+
+    options = PowerFlowOptions(solver_type,
+                               verbose=False,
+                               initialize_with_existing_solution=False,
+                               retry_with_other_methods=False,
+                               ignore_single_node_islands = True,
+                               control_q=Qconrol_mode,
+                               tolerance = 1e-10)
     
     pf = PowerFlowDriver(grid, options)
     pf.run()
