@@ -43,7 +43,7 @@ def process_GridCal_PF_loadPQ(GridCal_grid, pf_results):
     
     return pf_bus, pf_load, pf_gen
 
-def process_GridCal_PF_loadPQ_StaticGen(GridCal_grid, pf_results, Generators,n_pf):
+def process_GridCal_PF_loadPQ_StaticGen(GridCal_grid, pf_results, Generators,n_pf=1):
     
     Sbase = GridCal_grid.Sbase
     
@@ -141,11 +141,11 @@ def assign_StaticGen(main_circuit,Generators):
             bus_code=int(bus.code)
             gen=bus.generators[0]
             
-            gen.Snom=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Snom']
+            gen.Snom=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Pmax']/0.8
             gen.P=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Pg_i']
             gen.Qmax=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Qmax']
             gen.Qmin=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Qmin']
-            gen.Pmax=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Snom']*0.8
+            gen.Pmax=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Pmax']
             gen.Pmin=0
             gen.Vset=1
             
@@ -176,11 +176,11 @@ def assign_Normal_or_StaticGen(main_circuit,Generators):
             if bus.is_slack:
                 gen=bus.generators[0]
                 
-                gen.Snom=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Snom']
+                gen.Snom=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Pmax']/0.8
                 gen.P=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Pg_i']
                 gen.Qmax=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Qmax']
                 gen.Qmin=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Qmin']
-                gen.Pmax=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Snom']*0.8
+                gen.Pmax=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Pmax']
                 gen.Pmin=0
                 gen.Vset=1
                 
@@ -195,10 +195,10 @@ def assign_Normal_or_StaticGen(main_circuit,Generators):
             elif Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Static']==0:
                 gen=bus.generators[0]
                 
-                gen.Snom=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Snom']
+                gen.Snom=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Pmax']/0.8
                 gen.P=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Pg_i']
                 gen.Qmax=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Qmax']
                 gen.Qmin=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Qmin']
-                gen.Pmax=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Snom']*0.8
+                gen.Pmax=Generators.loc[Generators.query('BusNum == @bus_code').index[0],'Pmax']
                 gen.Pmin=0
                 gen.Vset=1

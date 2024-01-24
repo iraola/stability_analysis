@@ -120,9 +120,12 @@ def assign_PVGen(GridCal_grid,d_raw_data,d_op):
                 gen.P=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
                 gen.Qmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmax']
                 gen.Qmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmin']
+                # gen.Qmax=0.33*d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
+                # gen.Qmin=-0.33*d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
                 gen.Pmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmax']
                 gen.Pmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmin']
-                gen.Vset=1
+                gen.Vset=1.05
+                gen.Pf=0.95
                 
             else:
                 bus.generators=[]
@@ -136,9 +139,12 @@ def assign_PVGen(GridCal_grid,d_raw_data,d_op):
                 gen.P=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
                 gen.Qmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmax']
                 gen.Qmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmin']
+                # gen.Qmax=0.33*d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
+                # gen.Qmin=-0.33*d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
                 gen.Pmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmax']
                 gen.Pmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmin']
-                gen.Vset=1
+                gen.Vset=1.05
+                gen.Pf=0.95
                 
                 GridCal_grid.add_generator(bus, gen)
                 
