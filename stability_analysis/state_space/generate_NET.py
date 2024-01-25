@@ -192,7 +192,7 @@ def generate_T_nodes(d_grid):
 
 def add_trafo(d_grid, connect_mtx_rl, connect_mtx_PI):
         
-    T_NET = d_grid['T_NET']
+    T_NET = d_grid['T_NET'].copy()
     T_trafo = d_grid['T_trafo']
     number = np.max(T_NET['number']) + 1    
     missing = []
@@ -255,7 +255,6 @@ def add_TH(T_TH, connect_mtx_rl, connect_mtx_PI, T_NET_wTf, rl_T_nodes):
     
     nodeACmax = connect_mtx_rl.shape[0] + 1
     number = np.max(T_NET_wTf['number']) + 1
-    index_table = rl_T_nodes.shape[0]
     missing = []
 
     for th in range(T_TH.shape[0]):
@@ -273,12 +272,18 @@ def add_TH(T_TH, connect_mtx_rl, connect_mtx_PI, T_NET_wTf, rl_T_nodes):
             # Add row to T_NET
             T_NET_wTf.loc[len(T_NET_wTf)] = [number, T_TH['bus'][th], nodeACmax, T_TH['R'][th], T_TH['X'][th], 0, 1, T_TH['L'][th], 0]
             
-            rl_T_nodes.loc[index_table, 'Node'] = nodeACmax
-            rl_T_nodes['Node'] = rl_T_nodes['Node'].astype(int)
+            # Add row to rl_T_nodes
+            nsb = len(rl_T_nodes.columns)-1
+            init_nodes = np.zeros([1,1], dtype = int)  # Initialize column Node
+            init_elements = np.empty([1,nsb], dtype = str) # Initialize columns Element_n    
+            df_nodes = pd.DataFrame(init_nodes, columns=['Node'])
+            df_elements = pd.DataFrame(init_elements, columns=[f'Element_{i}' for i in range(1, nsb+1)])
+            T_nodes = pd.concat([df_nodes, df_elements], axis=1)    
             
-            rl_T_nodes.loc[index_table, 'Element_1'] = 'Additional TH' + str(T_TH['number'][th])
-            
-            index_table += 1            
+            T_nodes.loc[0, 'Node'] = nodeACmax            
+            T_nodes.loc[0, 'Element_1':] = ['Additional TH' + str(T_TH['number'][th])]+['']*(nsb-1)
+            rl_T_nodes = pd.concat([rl_T_nodes, T_nodes], axis=0)  
+                    
             nodeACmax += 1            
             number += 1
             
@@ -1049,7 +1054,6 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
         ird0 = -Iload * np.sin(theta0)
     
         currents = Connectivity_Matrix[nodeAC-1, :] #idx starts at 0
-        total = np.sum(currents > 0)
         unus = []
     
         for i in range(currents.size):
@@ -1122,7 +1126,6 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
         w = 2*np.pi*f
         
         currents = Connectivity_Matrix[nodeAC-1, :] #idx starts at 0
-        total = np.sum(currents > 0)
         unus = []
     
         for i in range(currents.size):
