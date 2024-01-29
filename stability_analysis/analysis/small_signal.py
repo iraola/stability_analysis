@@ -57,6 +57,16 @@ def FEIG(ss_sys, plot=False):
 
 
 def FMODAL(ss_sys, plot):
+    """
+    Participation Factors Analysis
+
+    Parameters:
+    - ss_sys (StateSpace): State-space representation of the system.
+    - plot (bool): Flag indicating whether to generate and display the participation factor heatmap.
+
+    Returns:
+    - df_nPF_red (DataFrame): DataFrame containing normalized Participation Factors (nPF) for each mode and state.
+    """
     
     # Obtain left and right eigenvectors
     eig, vl, vr = linalg.eig(ss_sys.A, left=True, right=True)
@@ -134,6 +144,18 @@ def FMODAL(ss_sys, plot):
     
     
 def FMODAL_REDUCED(ss_sys, plot, modeID):
+    """
+    Reduced Participation Factors Analysis for Specified Modes
+
+    Parameters:
+    - ss_sys (StateSpace): State-space representation of the system.
+    - plot (bool): Flag indicating whether to generate and display the reduced participation factor heatmap.
+    - modeID (list): List of mode IDs for which to perform the analysis. If None, all modes are considered.
+
+    Returns:
+    - T_modal (DataFrame): DataFrame containing eigenvalue information for the specified modes.
+    - df_nPF_red (DataFrame): DataFrame containing normalized Participation Factors (nPF) for the specified modes and states.
+    """
     
     # Obtain left and right eigenvectors
     eig, vl, vr = linalg.eig(ss_sys.A, left=True, right=True)
@@ -215,6 +237,19 @@ def FMODAL_REDUCED(ss_sys, plot, modeID):
     
         
 def FMODAL_REDUCED_tol(ss_sys, plot, modeID, tol):
+    """
+    Reduced Participation Factors Analysis for Specified Modes with Tolerance
+    
+    Parameters:
+    - ss_sys (StateSpace): State-space representation of the system.
+    - plot (bool): Flag indicating whether to generate and display the reduced participation factor heatmap.
+    - modeID (list): List of mode IDs for which to perform the analysis. If None, all modes are considered.
+    - tol (float): Tolerance value to filter out low participation factors. Default is 0.005.
+    
+    Returns:
+    - T_modal (DataFrame): DataFrame containing eigenvalue information for the specified modes.
+    - df_nPF_red (DataFrame): DataFrame containing normalized Participation Factors (nPF) for the specified modes and states.
+    """
     
     # Obtain left and right eigenvectors
     eig, vl, vr = linalg.eig(ss_sys.A, left=True, right=True)
