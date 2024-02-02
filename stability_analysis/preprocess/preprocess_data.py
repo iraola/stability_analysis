@@ -56,7 +56,7 @@ def preprocess_raw(d_raw_data):
             
             case "branch":
                 # Ensure bus_from < bus_to               
-                df = reorder_buses_lines(df)                
+                df = reorder_buses_lines_raw(df)                
                 # Ensure only one line between two buses
                 d_raw_data[name] = remove_parallel_lines_raw(df)
                 
@@ -108,7 +108,7 @@ def preprocess_raw(d_raw_data):
                 
             case "trafo":
                 # Ensure bus_from < bus_to               
-                df = reorder_buses_lines(df)                
+                df = reorder_buses_lines_raw(df)                
                 # Ensure only one line between two buses
                 d_raw_data[name] = remove_parallel_trafos_raw(df)
                 
@@ -124,7 +124,7 @@ def preprocess_raw(d_raw_data):
 
 
 
-def reorder_buses_lines(df):
+def reorder_buses_lines_raw(df):
     # Create a boolean mask for the condition 'I' > 'J'               
     mask = df['I'] > df['J']                    
     # Swap the values in 'I' and 'J' columns where the condition is True
@@ -132,6 +132,16 @@ def reorder_buses_lines(df):
     df.loc[mask, 'I'] = df.loc[mask, 'J']
     df.loc[mask, 'J'] = temp     
     return df
+
+def reorder_buses_lines(df):
+    # Create a boolean mask for the condition 'I' > 'J'               
+    mask = df['bus_from'] > df['bus_to']                    
+    # Swap the values in 'I' and 'J' columns where the condition is True
+    temp = df.loc[mask, 'bus_from'].copy()
+    df.loc[mask, 'bus_from'] = df.loc[mask, 'bus_to']
+    df.loc[mask, 'bus_to'] = temp     
+    return df
+
 
 def remove_parallel_lines_raw(df):
     # Find rows with duplicate 'I' and 'J' values
@@ -147,8 +157,10 @@ def remove_parallel_lines_raw(df):
         b_values = group_df['B'].values
         
         # Calculate the equivalent values using the parallel combination formula
-        equivalent_r = 1 / sum(1 / r_values)
-        equivalent_x = 1 / sum(1 / x_values)
+        z_values = r_values + 1j * x_values
+        equivalent_z = 1 / np.sum(1 / z_values)
+        equivalent_r = np.real(equivalent_z)
+        equivalent_x = np.imag(equivalent_z)
         equivalent_b = sum(b_values)
         
         # Update the original rows of the group with the new values
@@ -174,8 +186,10 @@ def remove_parallel_trafos_raw(df):
         x_values = group_df['X12'].values
         
         # Calculate the equivalent values using the parallel combination formula
-        equivalent_r = 1 / sum(1 / r_values)
-        equivalent_x = 1 / sum(1 / x_values)
+        z_values = r_values + 1j * x_values
+        equivalent_z = 1 / np.sum(1 / z_values)
+        equivalent_r = np.real(equivalent_z)
+        equivalent_x = np.imag(equivalent_z)
         
         # Update the original rows of the group with the new values
         df.loc[(df['I'] == i) & (df['J'] == j), ['R12', 'X12']] = equivalent_r, equivalent_x
@@ -201,8 +215,10 @@ def remove_parallel_lines(df):
         b_values = group_df['B'].values
         
         # Calculate the equivalent values using the parallel combination formula
-        equivalent_r = 1 / sum(1 / r_values)
-        equivalent_x = 1 / sum(1 / x_values)
+        z_values = r_values + 1j * x_values
+        equivalent_z = 1 / np.sum(1 / z_values)
+        equivalent_r = np.real(equivalent_z)
+        equivalent_x = np.imag(equivalent_z)
         equivalent_b = sum(b_values)
         
         # Update the original rows of the group with the new values
@@ -213,6 +229,7 @@ def remove_parallel_lines(df):
     # Reset the indices
     df.reset_index(drop=True, inplace=True)
     return df
+
 
 def remove_parallel_lines_and_trafos_raw(df):
     
@@ -242,8 +259,10 @@ def remove_parallel_lines_and_trafos_raw(df):
             x_values = x_values[mask] 
             
             # Calculate the equivalent values using the parallel combination formula
-            equivalent_r = 1 / sum(1 / r_values)
-            equivalent_x = 1 / sum(1 / x_values)    
+            z_values = r_values + 1j * x_values
+            equivalent_z = 1 / np.sum(1 / z_values)
+            equivalent_r = np.real(equivalent_z)
+            equivalent_x = np.imag(equivalent_z)  
             
             # Update the original rows of the group with the new values
             df["branch"].loc[(df["branch"]['I'] == i) & (df["branch"]['J'] == j), ['R', 'X']] = equivalent_r, equivalent_x
@@ -255,8 +274,6 @@ def remove_parallel_lines_and_trafos_raw(df):
     
     return df            
             
-
-    return df
 
 def rename_nodes():
     """
@@ -273,4 +290,40 @@ def raw2excel(d_raw_data,excel_raw):
 
     print("WARNING: You should now create the MAIN excel file from RAW excel file")
     print(f"RAW excel file is found in: {excel_raw}") 
-    print("MAIN excel file should be created in: /tool/data/cases/")                          
+    print("MAIN excel file should be created in: /tool/data/cases/")              
+         
+    
+def buses_as_int(d_grid):
+    
+    d_grid['T_NET']['bus_from'] = d_grid['T_NET']['bus_from'].astype(int)
+    d_grid['T_NET']['bus_to'] = d_grid['T_NET']['bus_to'].astype(int)
+    
+    d_grid['T_DC_NET']['bus_from'] = d_grid['T_DC_NET']['bus_from'].astype(int)
+    d_grid['T_DC_NET']['bus_to'] = d_grid['T_DC_NET']['bus_to'].astype(int)
+    
+    d_grid['T_trafo']['bus_from'] = d_grid['T_trafo']['bus_from'].astype(int)
+    d_grid['T_trafo']['bus_to'] = d_grid['T_trafo']['bus_to'].astype(int)
+    
+    d_grid['T_load']['bus'] = d_grid['T_load']['bus'].astype(int)
+    
+    d_grid['T_TH']['bus'] = d_grid['T_TH']['bus'].astype(int)
+    
+    d_grid['T_SG']['bus'] = d_grid['T_SG']['bus'].astype(int)
+    
+    d_grid['T_VSC']['bus'] = d_grid['T_VSC']['bus'].astype(int)
+    
+    d_grid['T_MMC']['bus'] = d_grid['T_MMC']['bus'].astype(int)
+    d_grid['T_MMC']['NodeAC'] = d_grid['T_MMC']['NodeAC'].astype(int)
+    d_grid['T_MMC']['NodeDC'] = d_grid['T_MMC']['NodeDC'].astype(int)
+    
+    d_grid['T_b2b']['bus1'] = d_grid['T_b2b']['bus1'].astype(int)
+    d_grid['T_b2b']['bus2'] = d_grid['T_b2b']['bus2'].astype(int)
+    
+    d_grid['T_user']['bus'] = d_grid['T_user']['bus'].astype(int)
+
+    d_grid['T_buses']['bus'] = d_grid['T_buses']['bus'].astype(int)
+    
+    d_grid['T_case']['bus'] = d_grid['T_case']['bus'].astype(int)
+    
+    return d_grid
+    
