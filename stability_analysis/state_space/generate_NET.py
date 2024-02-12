@@ -917,7 +917,7 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
         Ar = np.empty(0)
         Br = np.empty((0,3))
         Cr = np.empty((0,2))
-        Dr = np.array([[1/R, 0, -vq0/(R**2)],[0, 1/R, -vd0/(R**2)]])
+        Dr = np.array([[1/R, 0, -vq0/(R**2)],[0, 1/R, -vd0/(R**2)]]) * -1
         
         ur = ['NET_vn' + str(nodeAC) + 'q', 'NET_vn' + str(nodeAC) + 'd', 'NET_Rld' + str(number)]
         yr = ['Load' + str(number) + '_irq', 'Load' + str(number) + '_ird']
