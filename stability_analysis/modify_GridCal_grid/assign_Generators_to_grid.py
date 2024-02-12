@@ -108,7 +108,13 @@ def assign_PV_or_StaticGen_read_original_grid(GridCal_grid,d_raw_data,d_op):
                 gen.Pmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmin']
                 gen.Vset=1 
                 
-def assign_PVGen(GridCal_grid,d_raw_data,d_op):
+def assign_PVGen(**kwargs):
+    GridCal_grid=kwargs.get("GridCal_grid",None)
+    d_raw_data=kwargs.get("d_raw_data",None)
+    d_op=kwargs.get("d_op",None)
+    voltage_profile_list=kwargs.get("voltage_profile_list",None)
+    indx_id=kwargs.get("indx_id",None)
+    V_set=kwargs.get("V_set",None)
     for bus in GridCal_grid.get_buses():
         bus_code=int(bus.code)
         
@@ -124,8 +130,14 @@ def assign_PVGen(GridCal_grid,d_raw_data,d_op):
                 # gen.Qmin=-0.33*d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
                 gen.Pmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmax']
                 gen.Pmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmin']
-                gen.Vset=1.05
                 gen.Pf=0.95
+
+                if voltage_profile_list!=None:
+                    idx=int(indx_id[np.where(indx_id[:,1]==bus_code),0])
+                    gen.Vset=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'V']=voltage_profile_list[idx]
+                
+                elif V_set!=None:
+                    gen.Vset=V_set
                 
             else:
                 bus.generators=[]
@@ -143,8 +155,14 @@ def assign_PVGen(GridCal_grid,d_raw_data,d_op):
                 # gen.Qmin=-0.33*d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
                 gen.Pmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmax']
                 gen.Pmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmin']
-                gen.Vset=1.05
                 gen.Pf=0.95
+                
+                if voltage_profile_list!=None:
+                    idx=int(indx_id[np.where(indx_id[:,1]==bus_code),0])
+                    gen.Vset=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'V']=voltage_profile_list[idx]
+                
+                elif V_set!=None:
+                    gen.Vset=V_set
                 
                 GridCal_grid.add_generator(bus, gen)
                 
