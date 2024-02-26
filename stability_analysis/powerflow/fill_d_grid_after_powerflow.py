@@ -41,7 +41,7 @@ def fill_d_grid(d_grid, GridCal_grid, d_pf, d_raw_data, d_op):
 def clean_d_grid_df(d_grid):
     
     for key in d_grid.keys():
-        if key!='gen_names':
+        if key!='gen_names' and key!='T_trafo':
             d_grid[key]=d_grid[key].iloc[:0]
     
     return d_grid
