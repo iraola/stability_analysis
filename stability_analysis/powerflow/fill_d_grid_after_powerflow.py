@@ -29,7 +29,7 @@ def fill_d_grid(d_grid, GridCal_grid, d_pf, d_raw_data, d_op):
 
     d_grid = fill_VSC(d_grid, d_raw_data)
     
-    d_grid = fill_BUSES(d_grid, d_pf)
+    d_grid = fill_BUSES(d_grid, d_pf, d_raw_data)
 
     # Write power-flow data to generator elements tables: T_TH, T_SG, T_VSC, T_user    
     # T_nodes = generate_NET.generate_T_nodes(d_grid)
@@ -106,10 +106,11 @@ def fill_GEN(d_grid, d_op, d_raw_data, d_pf, GridCal_grid):
             ind=d_op['Generators'].query('Snom_{} !=0'.format(element)).index
             for i in ind: 
                 d_grid['T_gen'].loc[j,'number']=n+1
-                d_grid['T_gen'].loc[j,'bus']=d_op['Generators'].loc[i,'BusNum']
+                bus_num=d_op['Generators'].loc[i,'BusNum']
+                d_grid['T_gen'].loc[j,'bus']= bus_num
                 d_grid['T_gen'].loc[j,'element']=element        
                 d_grid['T_gen'].loc[j,'Sn']=d_op['Generators'].loc[i,'Snom_{}'.format(element)]
-                d_grid['T_gen'].loc[j,'Area']=1
+                d_grid['T_gen'].loc[j,'Area']=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_num').index[0],'AREA']
                 d_grid['T_gen'].loc[j,'state']=1
                 
                 d_grid['T_gen'].loc[j,'P']= d_raw_data['generator'].loc[i,'alpha_P_'+element]*d_pf['pf_gen'].loc[i,'P']
@@ -170,9 +171,9 @@ def fill_VSC(d_grid, d_raw_data):
     
     return d_grid
 
-def fill_BUSES(d_grid, d_pf):
+def fill_BUSES(d_grid, d_pf, d_raw_data):
     d_grid['T_buses']=d_pf['pf_bus'][['bus','Vm','theta']]
-    d_grid['T_buses']['Area']=1
+    d_grid['T_buses']['Area']=d_raw_data['results_bus']['AREA']
     
     return d_grid
             
