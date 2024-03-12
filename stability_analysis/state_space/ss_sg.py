@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import control as ct
 from control.matlab import ss
 from stability_analysis.state_space import ss_functions as ssf
@@ -727,6 +728,7 @@ def generate_SG_pu(l_blocks, l_states, d_grid, lp_SG):
         # append ss to l_blocks
         l_blocks.append(SS_SG)
         l_states.extend(SS_SG.state_labels)
+        # pd.DataFrame.to_excel(pd.DataFrame(SS_SG.A),'SS_SG'+str(num)+'_A_py.xlsx')
      
     return l_blocks, l_states
 

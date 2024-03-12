@@ -2,6 +2,7 @@ import numpy as np
 import control as ct
 from control.matlab import ss
 from stability_analysis.state_space import ss_functions as ssf
+import pandas as pd
 
 
 def generate_linearization_point_VSC(d_grid):
@@ -577,7 +578,9 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC):
                 
                 # append ss to l_blocks
                 l_blocks.append(SS_GFOL)
-                l_states.extend(SS_GFOL.state_labels)    
+                l_states.extend(SS_GFOL.state_labels)
+                # pd.DataFrame.to_excel(pd.DataFrame(SS_GFOL.A),'SS_GFOL'+str(num)+'_A_py.xlsx')
+
 
                 
             case 'GFOR':
@@ -935,6 +938,8 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC):
                 # append ss to l_blocks
                 l_blocks.append(SS_GFOR)
                 l_states.extend(SS_GFOR.state_labels)     
+                # pd.DataFrame.to_excel(pd.DataFrame(SS_GFOR.A),'SS_GFOR'+str(num)+'_A_py.xlsx')
+
     
     return l_blocks, l_states
 
