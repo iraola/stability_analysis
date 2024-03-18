@@ -130,3 +130,4 @@ def assign_slack(d_grid):
         raise RuntimeError('Error: missing generator at slack bus')
         
     return d_grid
+

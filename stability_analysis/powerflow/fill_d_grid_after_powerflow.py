@@ -25,6 +25,8 @@ def fill_d_grid(d_grid, GridCal_grid, d_pf, d_raw_data, d_op):
     
     d_grid = fill_GEN(d_grid, d_op, d_raw_data, d_pf, GridCal_grid)
     
+    d_grid = no_gfol_at_slack(d_grid)
+    
     d_grid = fill_SG(d_grid, d_raw_data)
 
     d_grid = fill_VSC(d_grid, d_raw_data)
@@ -276,4 +278,23 @@ def PF2table(T_nodes, d_grid, pf_gen, GridCal_grid):
         
     return d_grid
     
+
+def no_gfol_at_slack(d_grid):
+    slack_bus=d_grid['T_gen'].query('type==0')['bus'].unique()[0]
+    slack_gfol=d_grid['T_gen'].query('bus == @slack_bus and element == "GFOL"')
     
+    if len(slack_gfol)>0:
+        slack_gfor=d_grid['T_gen'].query('bus == @slack_bus and element == "GFOR"')
+        
+        for var in ['Sn','P','Q']:
+            slack_gfor.loc[slack_gfor.index[0],var]=slack_gfor.loc[slack_gfor.index[0],var]+slack_gfol.loc[slack_gfol.index[0],var]
+        
+        i_slack= d_grid['T_gen'].query('bus == @slack_bus and element == "GFOL"').index[0]
+        number_start= d_grid['T_gen'].loc[i_slack,'number']
+        number_end=d_grid['T_gen'].loc[d_grid['T_gen'].index[-1],'number']
+        new_numbers=np.arange(number_start,number_end)
+        
+        d_grid['T_gen']=d_grid['T_gen'].drop(d_grid['T_gen'].query('bus == @slack_bus and element == "GFOL"').index[0],axis=0).reset_index(drop=True)   
+        d_grid['T_gen'].loc[i_slack:,'number']=new_numbers
+    
+    return d_grid
