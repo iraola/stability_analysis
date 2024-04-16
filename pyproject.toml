@@ -1,7 +1,7 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-[project]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+[metadata]
 name = "stability_analysis"
 version = "0.0.1"
 authors = [
@@ -15,5 +15,4 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
-[project.urls]
-"Homepage" = "https://github.com/iraola/StabilityAnalysis"
+repository = "https://github.com/iraola/stability_analysis"
