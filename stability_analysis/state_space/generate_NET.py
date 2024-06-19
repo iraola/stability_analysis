@@ -4,7 +4,7 @@ import re
 import control as ct
 from control.matlab import ss
 from stability_analysis.preprocess import preprocess_data
-
+from stability_analysis.state_space import interconnect
 
 def generate_SS_NET_blocks(d_grid, delta_slk):
     """
@@ -811,7 +811,16 @@ def generate_general_PI_NET(connect_mtx_PI, connect_mtx_rl, PI_T_nodes, T_trafo_
                        
         
         # Generate PI NET State-Space
-        PI_NET = ct.interconnect(llista_SS_rl+llista_SS_C+llista_SS_nus, states = llista_x_AC, inputs=llista_u_AC, outputs=llista_y_AC, check_unused = False) 
+        PI_NET = interconnect.interconnect(llista_SS_rl+llista_SS_C+llista_SS_nus, states = llista_x_AC, inputs=llista_u_AC, outputs=llista_y_AC, check_unused = False) 
+        # PI_NET.input_labels=llista_u_AC
+        # PI_NET.output_labels=llista_y_A
+        # PI_NET.state_labels=llista_x_AC
+        
+        pd.DataFrame.to_csv(pd.DataFrame(PI_NET.A),'PI_NET_A_myconn.csv')
+        pd.DataFrame.to_csv(pd.DataFrame(PI_NET.B),'PI_NET_B_myconn.csv')
+        pd.DataFrame.to_csv(pd.DataFrame(PI_NET.C),'PI_NET_C_myconn.csv')
+        pd.DataFrame.to_csv(pd.DataFrame(PI_NET.D),'PI_NET_D_myconn.csv')
+
         #Append SS to l_blocks 
         l_blocks.append(PI_NET)
         l_states.extend(llista_x_AC)
