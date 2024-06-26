@@ -3,6 +3,14 @@ import pandas as pd
 import control as ct
 from control.matlab import ss
 from stability_analysis.state_space import ss_functions as ssf
+from stability_analysis.state_space import interconnect
+
+def save_ss_matrices_fun(ss,path,filename):
+    pd.DataFrame.to_csv(pd.DataFrame(ss.A),path+filename+'_A.csv',index=False,header=False)
+    pd.DataFrame.to_csv(pd.DataFrame(ss.B),path+filename+'_B.csv',index=False,header=False)
+    pd.DataFrame.to_csv(pd.DataFrame(ss.C),path+filename+'_C.csv',index=False,header=False)
+    pd.DataFrame.to_csv(pd.DataFrame(ss.D),path+filename+'_D.csv',index=False,header=False)
+ 
 
 
 def generate_linearization_point_SG(d_grid):
@@ -100,11 +108,12 @@ def generate_linearization_point_SG(d_grid):
 
 
 
-def generate_SG_pu(l_blocks, l_states, d_grid, lp_SG):    
+def generate_SG_pu(l_blocks, l_states, d_grid, lp_SG, connect_fun='append_and_connect',save_ss_matrices=False):    
     
     T_SG = d_grid['T_SG']
     T_global = d_grid['T_global']
     
+    n_sg=0
     for idx, row in T_SG.iterrows():  
         
         ss_list = [] # Create list to store SG subsystems blocks 
@@ -342,7 +351,22 @@ def generate_SG_pu(l_blocks, l_states, d_grid, lp_SG):
                         exc_u = ['Vc', 'Vsg_mag', 'SG_ifd']
                         exc_y = [vf_d]
             
-                    exc_ss = ct.interconnect([excInput_ss, exc1_ss, exc2_ss, exc3_ss, exc4_ss, exc5_ss, exc6_ss, exc7_ss, exc8_ss], states = exc1_x , inputs = exc_u, outputs = exc_y)
+                    if connect_fun=='interconnect':
+                        exc_ss = ct.interconnect([excInput_ss, exc1_ss, exc2_ss, exc3_ss, exc4_ss, exc5_ss, exc6_ss, exc7_ss, exc8_ss], states = exc1_x , inputs = exc_u, outputs = exc_y)
+
+                        if save_ss_matrices == True:
+                            save_ss_matrices_fun(exc_ss,
+                                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                                     f'{exc_ss=}'.split('=')[0]+str(n_sg))
+                    elif connect_fun == 'append_and_connect':
+                        exc_ss = interconnect.interconnect([excInput_ss, exc1_ss, exc2_ss, exc3_ss, exc4_ss, exc5_ss, exc6_ss, exc7_ss, exc8_ss], states = exc1_x , inputs = exc_u, outputs = exc_y)
+
+                        
+                        if save_ss_matrices == True:
+                            save_ss_matrices_fun(exc_ss,
+                                                 'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                                 f'{exc_ss=}'.split('=')[0]+str(n_sg))
+
                     x_list.extend(exc1_x)
             
                 case 'ST1':
@@ -361,8 +385,23 @@ def generate_SG_pu(l_blocks, l_states, d_grid, lp_SG):
                     if pss['hasPSS']: # with PSS
                         excInput_ss = ssf.SS_ERROR(input_ref='Vc', input_sub='SG_Vst', output='V_excInput')
                         exc_ss0 = ss(exc_ss.A, exc_ss.B, exc_ss.C, exc_ss.D, states=exc_x, inputs=['V_excInput'], outputs=exc_y)
-                        exc_ss = ct.interconnect([excInput_ss, exc_ss0], states=exc_x, inputs = ['Vc','SG_Vst'], outputs = exc_y)
-                     
+                        
+                        if connect_fun=='interconnect':
+                            exc_ss = ct.interconnect([excInput_ss, exc_ss0], states=exc_x, inputs = ['Vc','SG_Vst'], outputs = exc_y)
+
+                            if save_ss_matrices == True:
+                                save_ss_matrices_fun(exc_ss,
+                                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                                         f'{exc_ss=}'.split('=')[0]+str(n_sg))
+                        elif connect_fun == 'append_and_connect':
+                            exc_ss = interconnect.interconnect([excInput_ss, exc_ss0], states=exc_x, inputs = ['Vc','SG_Vst'], outputs = exc_y)
+
+                            
+                            if save_ss_matrices == True:
+                                save_ss_matrices_fun(exc_ss,
+                                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                                     f'{exc_ss=}'.split('=')[0]+str(n_sg))
+                                             
                     else:  # without PSS 
                         exc_ss = ss(exc_ss.A, exc_ss.B, exc_ss.C, exc_ss.D, states=exc_x, inputs=['Vc'], outputs=exc_y)
                     
@@ -383,7 +422,23 @@ def generate_SG_pu(l_blocks, l_states, d_grid, lp_SG):
                     if pss['hasPSS']: # with PSS
                         excInput_ss = ssf.SS_ERROR(input_ref='Vc', input_sub='SG_Vst', output='V_excInput')
                         exc_ss0 = ss(exc_ss.A, exc_ss.B, exc_ss.C, exc_ss.D, states=exc_x, inputs=['V_excInput'], outputs=exc_y)
-                        exc_ss = ct.interconnect([excInput_ss, exc_ss0], states=exc_x, inputs = ['Vc','SG_Vst'], outputs = exc_y)
+                        
+                        if connect_fun=='interconnect':
+                            exc_ss = ct.interconnect([excInput_ss, exc_ss0], states=exc_x, inputs = ['Vc','SG_Vst'], outputs = exc_y)
+
+                            if save_ss_matrices == True:
+                                save_ss_matrices_fun(exc_ss,
+                                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                                         f'{exc_ss=}'.split('=')[0]+str(n_sg))
+                        elif connect_fun == 'append_and_connect':
+                            exc_ss = interconnect.interconnect([excInput_ss, exc_ss0], states=exc_x, inputs = ['Vc','SG_Vst'], outputs = exc_y)
+
+                            
+                            if save_ss_matrices == True:
+                                save_ss_matrices_fun(exc_ss,
+                                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                                     f'{exc_ss=}'.split('=')[0]+str(n_sg))
+                        
                      
                     else:  # without PSS
                         exc_ss = ss(exc_ss.A, exc_ss.B, exc_ss.C, exc_ss.D, states=exc_x, inputs=['Vc'], outputs=exc_y)
@@ -442,7 +497,23 @@ def generate_SG_pu(l_blocks, l_states, d_grid, lp_SG):
                         pss6_ss = ss(pss6_ss.A, pss6_ss.B, pss6_ss.C, pss6_ss.D, states = pss6_x, inputs = ['SG_Vst_in'], outputs = ['SG_Vst'])
                         
                         pss_x = pss1_x + pss2_x + pss4_x + pss6_x
-                        pss_ss = ct.interconnect([Pe_ss,pss1_ss,pss2_ss,pss3_ss,pss4_ss,pss5_ss,pss6_ss], states = pss_x, inputs = [we_pu,Te], outputs = ['SG_Vst'])
+                        
+                        if connect_fun=='interconnect':
+                            pss_ss = ct.interconnect([Pe_ss,pss1_ss,pss2_ss,pss3_ss,pss4_ss,pss5_ss,pss6_ss], states = pss_x, inputs = [we_pu,Te], outputs = ['SG_Vst'])
+
+                            if save_ss_matrices == True:
+                                save_ss_matrices_fun(pss_ss,
+                                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                                         f'{pss_ss=}'.split('=')[0]+str(n_sg))
+                        elif connect_fun == 'append_and_connect':
+                            pss_ss = interconnect.interconnect([Pe_ss,pss1_ss,pss2_ss,pss3_ss,pss4_ss,pss5_ss,pss6_ss], states = pss_x, inputs = [we_pu,Te], outputs = ['SG_Vst'])
+
+                            
+                            if save_ss_matrices == True:
+                                save_ss_matrices_fun(pss_ss,
+                                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                                     f'{pss_ss=}'.split('=')[0]+str(n_sg))
+                        
                         x_list.extend(pss_x)            
                         ss_list.append(pss_ss)                           
                         
@@ -499,7 +570,23 @@ def generate_SG_pu(l_blocks, l_states, d_grid, lp_SG):
                 ss_P_err      = ssf.SS_ADD(Pref, 'SG_Pm_err', 'SG_cv')    
                 gov_in        = ['SG_wref', we_pu, Pref]
                 gov_out       = ['SG_cv']
-                gov_ss = ct.interconnect([ss_w_err, ss_w_droop, ss_P_err], inputs = gov_in, outputs = gov_out, check_unused = False) 
+                
+                if connect_fun=='interconnect':
+                    gov_ss = ct.interconnect([ss_w_err, ss_w_droop, ss_P_err], inputs = gov_in, outputs = gov_out, check_unused = False) 
+
+                    if save_ss_matrices == True:
+                        save_ss_matrices_fun(gov_ss,
+                                                 'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                                 f'{gov_ss=}'.split('=')[0]+str(n_sg))
+                elif connect_fun == 'append_and_connect':
+                    gov_ss = interconnect.interconnect([ss_w_err, ss_w_droop, ss_P_err], inputs = gov_in, outputs = gov_out, check_unused = False) 
+
+                    
+                    if save_ss_matrices == True:
+                        save_ss_matrices_fun(gov_ss,
+                                             'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                             f'{gov_ss=}'.split('=')[0]+str(n_sg))
+                
                 ss_list.append(gov_ss)
                 
                 # Turbine multi-mass
@@ -518,7 +605,23 @@ def generate_SG_pu(l_blocks, l_states, d_grid, lp_SG):
                 x_turb = [x_turb5, x_turb4, x_turb3, x_turb2]
                 turb_in = 'SG_cv'
                 turb_out = [Tt_2, Tt_3, Tt_4, Tt_5]
-                turb_ss = ct.interconnect([ss_turb5, ss_turb4, ss_turb3, ss_turb2], states = x_turb, inputs = turb_in, outputs = turb_out, check_unused = False) 
+                
+                if connect_fun=='interconnect':
+                    turb_ss = ct.interconnect([ss_turb5, ss_turb4, ss_turb3, ss_turb2], states = x_turb, inputs = turb_in, outputs = turb_out, check_unused = False) 
+
+                    if save_ss_matrices == True:
+                        save_ss_matrices_fun(turb_ss,
+                                                 'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                                 f'{turb_ss=}'.split('=')[0]+str(n_sg))
+                elif connect_fun == 'append_and_connect':
+                    turb_ss = interconnect.interconnect([ss_turb5, ss_turb4, ss_turb3, ss_turb2], states = x_turb, inputs = turb_in, outputs = turb_out, check_unused = False) 
+
+                    
+                    if save_ss_matrices == True:
+                        save_ss_matrices_fun(turb_ss,
+                                             'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                             f'{turb_ss=}'.split('=')[0]+str(n_sg))
+                
                 ss_list.append(turb_ss)   
                 x_list.extend(x_turb) 
                 
@@ -535,7 +638,23 @@ def generate_SG_pu(l_blocks, l_states, d_grid, lp_SG):
                 ss_P_err      = ssf.SS_ADD(Pref, 'SG_Pm_err', 'SG_cv')    
                 gov_in        = ['SG_wref', we_pu, Pref]
                 gov_out       = ['SG_cv']
-                gov_ss = ct.interconnect([ss_w_err, ss_w_droop, ss_P_err], inputs = gov_in, outputs = gov_out, check_unused = False) 
+                
+                if connect_fun=='interconnect':
+                    gov_ss = ct.interconnect([ss_w_err, ss_w_droop, ss_P_err], inputs = gov_in, outputs = gov_out, check_unused = False) 
+
+                    if save_ss_matrices == True:
+                        save_ss_matrices_fun(gov_ss,
+                                                 'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                                 f'{gov_ss=}'.split('=')[0]+str(n_sg))
+                elif connect_fun == 'append_and_connect':
+                    gov_ss = interconnect.interconnect([ss_w_err, ss_w_droop, ss_P_err], inputs = gov_in, outputs = gov_out, check_unused = False) 
+
+                    
+                    if save_ss_matrices == True:
+                        save_ss_matrices_fun(gov_ss,
+                                             'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                             f'{gov_ss=}'.split('=')[0]+str(n_sg))
+
                 ss_list.append(gov_ss)  
                 
                 # Turbine single-mass
@@ -706,8 +825,21 @@ def generate_SG_pu(l_blocks, l_states, d_grid, lp_SG):
             
         if not row['govturb'] == 'no':
             input_vars.extend([Pref])
+        
+        if connect_fun=='interconnect':
+            SS_SG = ct.interconnect(ss_list, states = x_list, inputs = input_vars, outputs = output_vars, check_unused = False) 
+    
+            if save_ss_matrices == True:
+                save_ss_matrices_fun(SS_SG,
+                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                         f'{SS_SG=}'.split('=')[0]+str(n_sg))
+        elif connect_fun == 'append_and_connect':
+            SS_SG = interconnect.interconnect(ss_list, states = x_list, inputs = input_vars, outputs = output_vars, check_unused = False) 
             
-        SS_SG = ct.interconnect(ss_list, states = x_list, inputs = input_vars, outputs = output_vars, check_unused = False) 
+            if save_ss_matrices == True:
+                save_ss_matrices_fun(SS_SG,
+                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                     f'{SS_SG=}'.split('=')[0]+str(n_sg))
                 
         # adapt inputs/outputs
         input_labels = SS_SG.input_labels
@@ -729,7 +861,7 @@ def generate_SG_pu(l_blocks, l_states, d_grid, lp_SG):
         l_blocks.append(SS_SG)
         l_states.extend(SS_SG.state_labels)
         # pd.DataFrame.to_excel(pd.DataFrame(SS_SG.A),'SS_SG'+str(num)+'_A_py.xlsx')
-     
+        n_sg=n_sg+1
     return l_blocks, l_states
 
 

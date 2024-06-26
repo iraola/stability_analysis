@@ -1,7 +1,7 @@
-from control.namedio import NamedIOSystem, _process_signal_list, \
+from stability_analysis.state_space.namedio import NamedIOSystem, _process_signal_list, \
     _process_namedio_keywords, isctime, isdtime, common_timebase
 from control.statesp import StateSpace, tf2ss, _convert_to_statespace
-from control.iosys import InterconnectedSystem,LinearIOSystem
+from control.nlsys import InterconnectedSystem
 from control.bdalg import append, connect
 import numpy as np
 
@@ -23,9 +23,13 @@ def append_and_connect(newsys):
     llista_y_conc=[]
     llista_x_conc=[]
 
+    # i=-1
     for s in llista_sys:
+        # i=i+1
+        # try:
         sys_app=append(sys_app,s)
-
+        # except:
+        #     print(i)
         llista_u_conc.extend(s.input_labels)
         llista_y_conc.extend(s.output_labels)
         llista_x_conc.extend(s.state_labels)
@@ -37,35 +41,99 @@ def append_and_connect(newsys):
     sys_app.state_my_labels=llista_x_conc
 
     llista_u_2conn=list(set(llista_u_conc)-set(llista_u))
-
-    sys_inp_indx=[]
+    
+    excluded_u=[]
     for u in llista_u_2conn:
-            sys_inp_indx.extend(np.where(np.array(sys_app.input_my_labels)==u)[0]+1)
+        if any([u in sys.output_labels for sys in llista_sys])==False:
+            # print(u)
+            excluded_u.append(u)
+    
+    # sys_inp_indx=[]
+    # for u in llista_u_2conn:
+    #         sys_inp_indx.extend(np.where(np.array(sys_app.input_my_labels)==u)[0]+1)
             
+    # sys_out_indx=[]
+    # sys_out_indx_app=[]
+    # for y in llista_u_2conn:
+    #         n_inp=len(np.where(np.array(sys_app.input_my_labels)==y)[0]+1)
+    #         # sys_out_indx.append((np.where(np.array(sys_app.output_my_labels)==y)[0]+1))
+    #         for n in range(0,n_inp):
+    #             sys_out_indx.extend(np.where(np.array(sys_app.output_my_labels)==y)[0]+1)
+    #             sys_out_indx_app.append(np.where(np.array(sys_app.output_my_labels)==y)[0]+1)
+                
+    #             if len(np.where(np.array(sys_app.output_my_labels)==y)[0])==0:
+    #                 print(y)
+                    
+    sys_inp_indx=[]
     sys_out_indx=[]
-    for y in llista_u_2conn:
-            n_inp=len(np.where(np.array(sys_app.input_my_labels)==y)[0]+1)
-            sys_out_indx.extend(np.ones([n_inp,])*np.where(np.array(sys_app.output_my_labels)==y)[0]+1)
-            
+
+    for u in llista_u_2conn:
+        if u not in excluded_u:
+            sys_inp_indx.extend(np.where(np.array(sys_app.input_my_labels)==u)[0]+1)
+            n_inp=len(np.where(np.array(sys_app.input_my_labels)==u)[0]+1)
+ 
+            for n in range(0,n_inp):
+                sys_out_indx.extend(np.where(np.array(sys_app.output_my_labels)==u)[0]+1)
+                
+                # if len(np.where(np.array(sys_app.output_my_labels)==u)[0])==0:
+                #     print(u)
+                    
+   
+    
+    # for i in range(0,len(llista_sys)):
+    #     if y in llista_sys[i].input_labels:
+    #         print('inputs ',i)
+    #     if y in llista_sys[i].output_labels:    
+    #         print('output ',i)
 
     Q = list(zip(sys_inp_indx, sys_out_indx))
 
-    uu_idx=[sys_app.input_my_labels.index(u)+1 for u in llista_u]
-    yy_idx=[sys_app.output_my_labels.index(y)+1 for y in llista_y]
+    # uu_idx=[sys_app.input_my_labels.index(u)+1 for u in llista_u]
+    # yy_idx=[sys_app.output_my_labels.index(y)+1 for y in llista_y]
 
-    uu_idx=[]
+    uu_idx_ext=[]
+    uu_idx_app=[]
     for u in llista_u:
-            uu_idx.extend(np.where(np.array(sys_app.input_my_labels)==u)[0]+1)
+            uu_idx_ext.extend(np.where(np.array(sys_app.input_my_labels)==u)[0]+1)
+            uu_idx_app.append(np.where(np.array(sys_app.input_my_labels)==u)[0]+1)
 
+    
     yy_idx=[]
+    yy_idx_app=[]
     for y in llista_y:
             yy_idx.extend(np.where(np.array(sys_app.output_my_labels)==y)[0]+1)
-
-    sys_conn=connect(sys_app, Q, uu_idx , yy_idx)
-
+            yy_idx_app.append(np.where(np.array(sys_app.output_my_labels)==y)[0]+1)
+            
+    sys_conn=connect(sys_app, Q, uu_idx_ext , yy_idx)
+    
+    # nstates=sys_conn.nstates
+    # noutputs=len(uu_idx_app)
+    # sys_conn.noutputs=noutputs
+    # B=sys_conn.B
+    # sys_conn.B=np.zeros([nstates,noutputs])
+    
+    # D=sys_conn.D
+    # sys_conn.D=np.zeros([nstates,noutputs])
+    
+    nstates=sys_conn.nstates
+    ninputs=len(uu_idx_app)
+    sys_conn.ninputs=ninputs
+    B=sys_conn.B
+    sys_conn.B=np.zeros([nstates,ninputs])
+    
+    D=sys_conn.D
+    sys_conn.D=np.zeros([sys_conn.noutputs,ninputs])
+    
+    idx_1=0
+    idx_2=0
+    for uu_idx in uu_idx_app:
+        sys_conn.B[:,idx_2]=B[:,idx_1:idx_1+len(uu_idx)].sum(axis=1)
+        sys_conn.D[:,idx_2]=D[:,idx_1:idx_1+len(uu_idx)].sum(axis=1)
+        idx_2=idx_2+1
+        idx_1=idx_1+len(uu_idx)
     end=time.time()
     time_conn=end-start
-    print('time_connect',time_conn)
+    # print('time_connect',time_conn)
 
     sys_conn.state_labels=llista_x
     sys_conn.output_labels=llista_y
@@ -411,7 +479,7 @@ def interconnect(
     if check_unused:
         newsys.check_unused_signals(ignore_inputs, ignore_outputs)
 
-    if all([isinstance(sys, LinearIOSystem) for sys in newsys.syslist]):
+    if all([isinstance(sys, StateSpace) for sys in newsys.syslist]):
         newsys=append_and_connect(newsys)
 
     # # If all subsystems are linear systems, maintain linear structure

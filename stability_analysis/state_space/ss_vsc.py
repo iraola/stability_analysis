@@ -3,6 +3,13 @@ import control as ct
 from control.matlab import ss
 from stability_analysis.state_space import ss_functions as ssf
 import pandas as pd
+from stability_analysis.state_space import interconnect
+
+def save_ss_matrices_fun(ss,path,filename):
+    pd.DataFrame.to_csv(pd.DataFrame(ss.A),path+filename+'_A.csv',index=False,header=False)
+    pd.DataFrame.to_csv(pd.DataFrame(ss.B),path+filename+'_B.csv',index=False,header=False)
+    pd.DataFrame.to_csv(pd.DataFrame(ss.C),path+filename+'_C.csv',index=False,header=False)
+    pd.DataFrame.to_csv(pd.DataFrame(ss.D),path+filename+'_D.csv',index=False,header=False)
 
 
 def generate_linearization_point_VSC(d_grid):
@@ -157,11 +164,12 @@ def generate_linearization_point_VSC(d_grid):
 
 
 
-def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC):  
+def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC, connect_fun='append_and_connect',save_ss_matrices=False):  
     
     T_VSC = d_grid['T_VSC']
     T_global = d_grid['T_global']
     
+    n_vsc=0
     for idx, row in T_VSC.iterrows():  
         
         ss_list = [] # Create list to store SG subsystems blocks 
@@ -567,8 +575,23 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC):
                 # BUILD COMPLETE MODEL  
 
                 input_vars = ['vg_sys_q','vg_sys_d',REF_w]
-                output_vars = [iq, id, w_vsc]                                           
-                SS_GFOL = ct.interconnect(ss_list, states = x_list, inputs = input_vars, outputs = output_vars, check_unused = False) 
+                output_vars = [iq, id, w_vsc]    
+
+                if connect_fun=='interconnect':
+                    SS_GFOL = ct.interconnect(ss_list, states = x_list, inputs = input_vars, outputs = output_vars, check_unused = False) 
+
+                    if save_ss_matrices == True:
+                        save_ss_matrices_fun(SS_GFOL,
+                                                 'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                                 f'{SS_GFOL=}'.split('=')[0]+str(n_vsc))
+                elif connect_fun == 'append_and_connect':
+                    SS_GFOL = interconnect.interconnect(ss_list, states = x_list, inputs = input_vars, outputs = output_vars, check_unused = False) 
+
+                    
+                    if save_ss_matrices == True:
+                        save_ss_matrices_fun(SS_GFOL,
+                                             'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                             f'{SS_GFOL=}'.split('=')[0]+str(n_vsc))                                       
                         
                 # adapt inputs/outputs
                 input_labels = SS_GFOL.input_labels
@@ -922,7 +945,21 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC):
                     input_vars = ['vg_sys_q','vg_sys_d', REF_w]
                     output_vars = [iq, id, w_vsc]    
                                 
-                SS_GFOR = ct.interconnect(ss_list, states = x_list, inputs = input_vars, outputs = output_vars, check_unused = False) 
+                if connect_fun=='interconnect':
+                    SS_GFOR = ct.interconnect(ss_list, states = x_list, inputs = input_vars, outputs = output_vars, check_unused = False) 
+
+                    if save_ss_matrices == True:
+                        save_ss_matrices_fun(SS_GFOR,
+                                                 'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                                 f'{SS_GFOR=}'.split('=')[0]+str(n_vsc))
+                elif connect_fun == 'append_and_connect':
+                    SS_GFOR = interconnect.interconnect(ss_list, states = x_list, inputs = input_vars, outputs = output_vars, check_unused = False) 
+
+                    
+                    if save_ss_matrices == True:
+                        save_ss_matrices_fun(SS_GFOR,
+                                             'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                             f'{SS_GFOR=}'.split('=')[0]+str(n_vsc)) 
                         
                 # adapt inputs/outputs
                 input_labels = SS_GFOR.input_labels
@@ -940,7 +977,9 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC):
                 l_states.extend(SS_GFOR.state_labels)     
                 # pd.DataFrame.to_excel(pd.DataFrame(SS_GFOR.A),'SS_GFOR'+str(num)+'_A_py.xlsx')
 
-    
+        n_vsc=n_vsc+1
+        if n_vsc==39:
+            print(n_vsc)
     return l_blocks, l_states
 
 
