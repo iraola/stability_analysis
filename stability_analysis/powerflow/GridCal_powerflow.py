@@ -8,10 +8,13 @@ import pandas as pd
 from os import path
 
 
-def create_model(path_raw,name_raw):
+def create_model(path_raw, name_raw=None):
     
     # GET GRID TOPOLOGY
-    raw_file = path.join(path_raw, name_raw)  
+    if name_raw is not None:
+        raw_file = path.join(path_raw, name_raw)
+    else:
+        raw_file = path_raw
     grid = FileOpen(raw_file).open()
     return grid
     
