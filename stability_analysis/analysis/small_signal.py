@@ -277,9 +277,11 @@ def FMODAL_REDUCED_tol(ss_sys, plot, modeID, tol):
     nPF_mode = nPF[:, idx]
     locs = np.any(nPF_mode >= tol, axis=1) # avoid showing PFs lower than 0.005
     nPF_red = nPF_mode[locs, :]
-    
+    allStates = ss_sys.state_labels
+    selected_states = [state for state, loc in zip(allStates, locs) if loc]
+
     # Display PFs colormap
-    if plot:                 
+    if plot:
         fig, ax = plt.subplots() 
         aspect_ratio = 0.5 
         heatmap = ax.imshow(nPF_red, cmap="gray_r", aspect=aspect_ratio, vmin = 0, vmax = 1)
@@ -297,8 +299,6 @@ def FMODAL_REDUCED_tol(ss_sys, plot, modeID, tol):
         
         # Set Y axis
         ax.set_ylabel("States")
-        allStates = ss_sys.state_labels
-        selected_states = [state for state, loc in zip(allStates, locs) if loc]
         ax.set_yticks(np.arange(len(selected_states)))
         ax.set_yticklabels(selected_states)
         plt.yticks(fontsize=8)
