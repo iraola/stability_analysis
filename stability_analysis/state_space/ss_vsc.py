@@ -978,8 +978,7 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC, connect_fun='append_and_
                 # pd.DataFrame.to_excel(pd.DataFrame(SS_GFOR.A),'SS_GFOR'+str(num)+'_A_py.xlsx')
 
         n_vsc=n_vsc+1
-        if n_vsc==39:
-            print(n_vsc)
+        
     return l_blocks, l_states
 
 

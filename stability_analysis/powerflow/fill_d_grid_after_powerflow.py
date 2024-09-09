@@ -301,8 +301,9 @@ def no_gfol_at_slack(d_grid):
             idx_gfol=d_grid['T_gen'].query('element == "GFOL"').index
             d_grid['T_gen'].loc[idx_gfol,'number']=np.arange(1,len(idx_gfol)+1)
             
+            last_gfol=len(idx_gfol)+1
             idx_gfor=d_grid['T_gen'].query('element == "GFOR"').index
-            d_grid['T_gen'].loc[idx_gfor,'number']=np.arange(1,len(idx_gfor)+1)
+            d_grid['T_gen'].loc[idx_gfor,'number']=np.arange(last_gfol,last_gfol+len(idx_gfor))
         else:
             for var in ['Sn','P','Q']:
                 slack_gfor.loc[slack_gfor.index[0],var]=slack_gfor.loc[slack_gfor.index[0],var]+slack_gfol.loc[slack_gfol.index[0],var]
