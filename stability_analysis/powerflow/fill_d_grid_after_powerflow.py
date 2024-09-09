@@ -289,7 +289,10 @@ def no_gfol_at_slack(d_grid):
         if len(slack_gfor)==0:
             df=d_grid['T_gen'].query('element == "GFOR"')
             
-            insert_position = df[df['bus'] > slack_bus].index[0]
+            try:
+                insert_position = df[df['bus'] > slack_bus].index[0]
+            except:
+                insert_position = df[df['bus'] < slack_bus].index[-1]
 
             slack_gfor=slack_gfol.copy(deep=True)
             slack_gfor.loc[slack_gfor.index[0],'element']='GFOR'
