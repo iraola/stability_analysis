@@ -294,8 +294,8 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC, connect_fun='append_and_
                 tau_droop_u = row['tau_droop_u']
                 k_droop_u = row['k_droop_u']           
                 
-                if Cac == 0:
-                    raise RuntimeError("Cac of GFOL cannot be set to zero.")                
+                # if Cac == 0:
+                #     raise RuntimeError("Cac of GFOL cannot be set to zero.")                
                 
                 # ROTATION MATRICES
                 
@@ -980,6 +980,8 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC, connect_fun='append_and_
         n_vsc=n_vsc+1
         
     return l_blocks, l_states
+
+
 
 
 # %% ROTATION FOR SLACK
