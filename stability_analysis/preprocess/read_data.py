@@ -10,11 +10,13 @@ def read_sys_data(excel_sys):
     :return: a separate DataFrame for each grid component
     """        
     T_global = pd.read_excel(excel_sys, sheet_name='global')
+    T_global_DC = pd.read_excel(excel_sys, sheet_name='global_DC')
     T_NET = pd.read_excel(excel_sys, sheet_name='AC-NET') 
     T_DC_NET = pd.read_excel(excel_sys, sheet_name='DC-NET') 
     T_trafo = pd.read_excel(excel_sys, sheet_name='trafo')  
     T_load = pd.read_excel(excel_sys, sheet_name='load')  
-    T_TH = pd.read_excel(excel_sys, sheet_name='TH') 
+    T_TH = pd.read_excel(excel_sys, sheet_name='TH')
+    T_shunt = pd.read_excel(excel_sys, sheet_name='SHUNT')
     T_SG = pd.read_excel(excel_sys, sheet_name='SG')  
     T_VSC = pd.read_excel(excel_sys, sheet_name='VSC')  
     T_MMC = pd.read_excel(excel_sys, sheet_name='MMC')  
@@ -23,13 +25,17 @@ def read_sys_data(excel_sys):
     T_case = pd.read_excel(excel_sys, sheet_name='CASE') 
     T_buses = pd.read_excel(excel_sys, sheet_name='PF') 
     T_gen = pd.read_excel(excel_sys, sheet_name='Gen') 
+    T_IPC = pd.read_excel(excel_sys, sheet_name='IPC') 
+    T_sim = pd.read_excel(excel_sys, sheet_name='sim') 
     
     T_global = T_global.rename(columns=lambda x: x.strip())
+    T_global_DC = T_global_DC.rename(columns=lambda x: x.strip())
     T_NET = T_NET.rename(columns=lambda x: x.strip())
     T_DC_NET = T_DC_NET.rename(columns=lambda x: x.strip())
     T_trafo = T_trafo.rename(columns=lambda x: x.strip())  
     T_load = T_load.rename(columns=lambda x: x.strip()) 
     T_TH = T_TH.rename(columns=lambda x: x.strip()) 
+    T_shunt = T_shunt.rename(columns=lambda x: x.strip())     
     T_SG = T_SG.rename(columns=lambda x: x.strip())
     T_VSC = T_VSC.rename(columns=lambda x: x.strip()) 
     T_MMC = T_MMC.rename(columns=lambda x: x.strip())  
@@ -38,7 +44,9 @@ def read_sys_data(excel_sys):
     T_case = T_case.rename(columns=lambda x: x.strip()) 
     T_buses = T_buses.rename(columns=lambda x: x.strip()) 
     T_gen = T_gen.rename(columns=lambda x: x.strip()) 
-    
+    T_IPC = T_IPC.rename(columns=lambda x: x.strip()) 
+    T_sim = T_sim.rename(columns=lambda x: x.strip()) 
+
     # Create copies of original tables 
     T_NET_0 = T_NET.copy()
     T_DC_NET_0 = T_DC_NET.copy()
@@ -53,14 +61,17 @@ def read_sys_data(excel_sys):
     
     grid = {
     'T_global': T_global,
+    'T_global_DC': T_global_DC,
     'T_NET': T_NET,
     'T_DC_NET': T_DC_NET,
     'T_trafo': T_trafo,
     'T_load': T_load,
     'T_TH': T_TH,
+    'T_shunt': T_shunt,
     'T_SG': T_SG,
     'T_VSC': T_VSC,
     'T_MMC': T_MMC,
+    'T_IPC': T_IPC,
     'T_b2b': T_b2b,
     'T_user': T_user,
     'T_gen': T_gen,
