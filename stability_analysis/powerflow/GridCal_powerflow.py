@@ -21,7 +21,7 @@ def create_model(path_raw, name_raw=None):
 def run_powerflow(grid,solver_type=SolverType.NR, Qconrol_mode=ReactivePowerControlMode.NoControl):
             
     # RUN POWERFLOW
-    # for solver_type in [SolverType.IWAMOTO]: #, SolverType.NR, SolverType.LM, SolverType.FASTDECOUPLED]:
+    #for solver_type in [SolverType.IWAMOTO, SolverType.NR, SolverType.LM, SolverType.FASTDECOUPLED]:
     
     print(solver_type)
 
@@ -32,10 +32,13 @@ def run_powerflow(grid,solver_type=SolverType.NR, Qconrol_mode=ReactivePowerCont
                                ignore_single_node_islands = True,
                                control_q=Qconrol_mode,
                                tolerance = 1e-10)
+                               #max_iter=2)
     
     pf = PowerFlowDriver(grid, options)
     pf.run()
     
-    grid.get_buses()
+    #print('Converged:', pf.convergence_reports[0].converged_[0])
+    
+    # grid.get_buses()
     return pf
 

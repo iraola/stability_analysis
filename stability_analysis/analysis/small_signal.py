@@ -318,7 +318,7 @@ def FMODAL_REDUCED_tol(ss_sys, plot, modeID, tol):
     
     # Display T_EIG rows that match modeID    
     T_modal = T_EIG[T_EIG['mode'].isin(modeID)]
-    print(T_modal)
+    #print(T_modal)
             
     # Return PFs in dataframe format
     data = {'states': selected_states}
