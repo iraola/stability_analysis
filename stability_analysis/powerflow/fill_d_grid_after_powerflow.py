@@ -33,6 +33,8 @@ def fill_d_grid(d_grid, GridCal_grid, d_pf, d_raw_data, d_op):
     
     d_grid = fill_BUSES(d_grid, d_pf, d_raw_data)
 
+    d_grid = fill_TRAFOS(d_grid, d_raw_data, GridCal_grid)
+
     # Write power-flow data to generator elements tables: T_TH, T_SG, T_VSC, T_user    
     # T_nodes = generate_NET.generate_T_nodes(d_grid)
     
@@ -319,4 +321,30 @@ def no_gfol_at_slack(d_grid):
             d_grid['T_gen']=d_grid['T_gen'].drop(d_grid['T_gen'].query('bus == @slack_bus and element == "GFOL"').index[0],axis=0).reset_index(drop=True)   
             d_grid['T_gen'].loc[i_slack:,'number']=new_numbers
         
+    return d_grid
+
+def fill_TRAFOS(d_grid, d_raw_data, GridCal_grid):
+    start_T_NET=len(d_grid['T_NET'])
+    for idx,trafo in enumerate(GridCal_grid.transformers2w):
+        d_grid['T_trafo'].loc[idx,'number']=idx+1
+        d_grid['T_trafo'].loc[idx,'bus_from']=int(trafo.bus_from.code)
+        d_grid['T_trafo'].loc[idx,'bus_to']=int(trafo.bus_to.code)
+        d_grid['T_trafo'].loc[idx,'R']=trafo.R
+        d_grid['T_trafo'].loc[idx,'X']=trafo.X
+        d_grid['T_trafo'].loc[idx,'B']=trafo.B     
+        d_grid['T_trafo'].loc[idx,'tap_module']=1    
+        d_grid['T_trafo'].loc[idx,'tap_angle']=0     
+        d_grid['T_trafo'].loc[idx,'state']=1    
+        
+        # d_grid['T_NET'].loc[start_T_NET+idx,'number']=start_T_NET+idx+1
+        # d_grid['T_NET'].loc[start_T_NET+idx,'bus_from']=int(trafo.bus_from.code)
+        # d_grid['T_NET'].loc[start_T_NET+idx,'bus_to']=int(trafo.bus_to.code)
+        # d_grid['T_NET'].loc[start_T_NET+idx,'R']=trafo.R
+        # d_grid['T_NET'].loc[start_T_NET+idx,'X']=trafo.X
+        # d_grid['T_NET'].loc[start_T_NET+idx,'B']=trafo.B
+        # d_grid['T_NET'].loc[start_T_NET+idx,'state']=1
+    
+    # d_grid['T_NET'][["number", "bus_from", "bus_to"]] = d_grid['T_NET'][["number", "bus_from", "bus_to"]].astype(int)
+    d_grid['T_trafo'][["number", "bus_from", "bus_to"]] = d_grid['T_trafo'][["number", "bus_from", "bus_to"]].astype(int)
+    
     return d_grid
