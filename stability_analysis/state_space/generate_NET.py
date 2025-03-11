@@ -101,7 +101,12 @@ def xb2lc(d_grid):
     """
     
     T_buses = d_grid['T_buses']
-    T_buses['fb'] = d_grid['T_buses']['Area'].map(d_grid['T_global'].set_index('Area')['fb'])    
+#    T_buses['fb'] = d_grid['T_buses']['SyncArea'].map(d_grid['T_global'].set_index('SyncArea')['fb']) 
+    for SyncArea, fb in d_grid['T_global'].set_index('SyncArea')[['fb']].iterrows():
+        # print(SyncArea)
+        # print(fb)
+        
+        T_buses.loc[T_buses.query('SyncArea == @SyncArea').index,'fb'] =  fb[0]
         
     d_grid['T_NET']['L'] = d_grid['T_NET']['X'] / (2 * np.pi * d_grid['T_NET']['bus_from'].map(T_buses.set_index('bus')['fb']))
     d_grid['T_NET']['C'] = d_grid['T_NET']['B'] / (2 * np.pi * d_grid['T_NET']['bus_from'].map(T_buses.set_index('bus')['fb'])) / 2
@@ -242,9 +247,9 @@ def add_trafo(d_grid, connect_mtx_rl, connect_mtx_PI):
         # the terminal element cannot be a current source !!
         else:
             missing.append(tf)
-            print(f"Ensure that Trafo {T_trafo['number'][tf]} is connected to a voltage source.")
-            print("SGs and VSCs are current sources --> Add a Load to the bus.")
-            print("THs are current sources -->  Add the trafo as an RL in AC-NET.")
+            # print(f"Ensure that Trafo {T_trafo['number'][tf]} is connected to a voltage source.")
+            # print("SGs and VSCs are current sources --> Add a Load to the bus.")
+            # print("THs are current sources -->  Add the trafo as an RL in AC-NET.")
 
     T_trafo_missing = T_trafo.iloc[missing]
     
