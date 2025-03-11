@@ -70,7 +70,7 @@ def read_raw(raw_file):
         values = second_line.split(',')
         SBASE = float(values[1].strip())
         BASFRQ = float(values[5].split('/')[0].strip())  
-        data_global = {'AREA': [], 'BASKV': [], 'Sb_MVA': [SBASE], 'f_Hz': [BASFRQ], 'ref_bus': [], 'ref_element': []}
+        data_global = {'AREA': [],'SyncArea': [], 'BASKV': [], 'Sb_MVA': [SBASE], 'f_Hz': [BASFRQ], 'ref_bus': [], 'ref_element': []}
          
         notEOF = True    
         data_name = next_dataset(input_file)
@@ -161,7 +161,8 @@ def read_raw(raw_file):
                             trafo['SBASE12'].append(float(data_line[header.index('SBASE1-2')]))
                             trafo['STAT'].append(int(data_line[header.index('STAT')]))  
                     trafo = pd.DataFrame(trafo)
-                    
+                
+                #TODO: check with a raw file with multiple synchronous areas to adjust the parse process   
                 case "AREA":
                     while line := input_file.readline():
                         if data_name := header_found(line):
@@ -169,6 +170,7 @@ def read_raw(raw_file):
                         else:
                             data_line = process_data(line)
                             data_global['AREA'].append(int(data_line[header.index('I')]))
+                            data_global['SyncArea'].append(int(data_line[header.index('I')]))
                             slack_bus = int(data_line[header.index('ISW')]);
                             data_global['ref_bus'].append(slack_bus)
                             data_global['BASKV'].append(results_bus.loc[results_bus['I'] == slack_bus,'BASKV'].values[0])
@@ -186,7 +188,12 @@ def read_raw(raw_file):
                      
             if not data_name:
                 notEOF = False
-            
+    
+    results_bus['SyncArea']=1
+    branch['SyncArea']=1
+    load['SyncArea']=1
+    generator['SyncArea']=1
+    trafo['SyncArea']=1
     #print('STATUS: .raw data has been read')
         
     raw_data = {
