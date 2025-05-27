@@ -24,7 +24,10 @@ def read_sys_data(excel_sys):
     T_user = pd.read_excel(excel_sys, sheet_name='user') 
     T_case = pd.read_excel(excel_sys, sheet_name='CASE') 
     T_buses = pd.read_excel(excel_sys, sheet_name='PF') 
-    T_gen = pd.read_excel(excel_sys, sheet_name='Gen') 
+    try:
+        T_gen = pd.read_excel(excel_sys, sheet_name='Gen') 
+    except:
+        pass
     T_IPC = pd.read_excel(excel_sys, sheet_name='IPC') 
     T_sim = pd.read_excel(excel_sys, sheet_name='sim') 
     
@@ -43,7 +46,10 @@ def read_sys_data(excel_sys):
     T_user = T_user.rename(columns=lambda x: x.strip()) 
     T_case = T_case.rename(columns=lambda x: x.strip()) 
     T_buses = T_buses.rename(columns=lambda x: x.strip()) 
-    T_gen = T_gen.rename(columns=lambda x: x.strip()) 
+    try:
+        T_gen = T_gen.rename(columns=lambda x: x.strip()) 
+    except:
+        pass
     T_IPC = T_IPC.rename(columns=lambda x: x.strip()) 
     T_sim = T_sim.rename(columns=lambda x: x.strip()) 
 
@@ -59,26 +65,49 @@ def read_sys_data(excel_sys):
     T_user_0 = T_user.copy()
     T_gen_0 = T_gen.copy()
     
-    grid = {
-    'T_global': T_global,
-    'T_global_DC': T_global_DC,
-    'T_NET': T_NET,
-    'T_DC_NET': T_DC_NET,
-    'T_trafo': T_trafo,
-    'T_load': T_load,
-    'T_TH': T_TH,
-    'T_shunt': T_shunt,
-    'T_SG': T_SG,
-    'T_VSC': T_VSC,
-    'T_MMC': T_MMC,
-    'T_IPC': T_IPC,
-    'T_b2b': T_b2b,
-    'T_user': T_user,
-    'T_gen': T_gen,
-    'T_case': T_case,
-    'T_buses': T_buses,
-    'gen_names': ['TH','SG','VSC','MMC','user'] #list of generator types d_gen = {'SG': T_SG, ...} 
-    }
+    try:
+        grid = {
+        'T_global': T_global,
+        'T_global_DC': T_global_DC,
+        'T_NET': T_NET,
+        'T_DC_NET': T_DC_NET,
+        'T_trafo': T_trafo,
+        'T_load': T_load,
+        'T_TH': T_TH,
+        'T_shunt': T_shunt,
+        'T_SG': T_SG,
+        'T_VSC': T_VSC,
+        'T_MMC': T_MMC,
+        'T_IPC': T_IPC,
+        'T_b2b': T_b2b,
+        'T_user': T_user,
+        'T_gen': T_gen,
+        'T_case': T_case,
+        'T_buses': T_buses,
+        'gen_names': ['TH','SG','VSC','MMC','user'] #list of generator types d_gen = {'SG': T_SG, ...} 
+        }
+    except:    
+    
+        grid = {
+        'T_global': T_global,
+        'T_global_DC': T_global_DC,
+        'T_NET': T_NET,
+        'T_DC_NET': T_DC_NET,
+        'T_trafo': T_trafo,
+        'T_load': T_load,
+        'T_TH': T_TH,
+        'T_shunt': T_shunt,
+        'T_SG': T_SG,
+        'T_VSC': T_VSC,
+        'T_MMC': T_MMC,
+        'T_IPC': T_IPC,
+        'T_b2b': T_b2b,
+        'T_user': T_user,
+        'T_gen': T_gen,
+        'T_case': T_case,
+        'T_buses': T_buses,
+        'gen_names': ['TH','SG','VSC','MMC','user'] #list of generator types d_gen = {'SG': T_SG, ...} 
+        }
     
     grid_0 = {
     'T_NET_0': T_NET_0,
