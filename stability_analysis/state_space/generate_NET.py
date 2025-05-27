@@ -122,14 +122,14 @@ def generate_general_connect_mtx(d_grid):
     T_NET = d_grid['T_NET']
     
     # Connectivity Matrix generation:
-    n_nodes = max([max(T_NET['bus_from']), max(T_NET['bus_to'])])
+    n_nodes = int(max([max(T_NET['bus_from']), max(T_NET['bus_to'])]))
     connect_mtx_rl = np.zeros((n_nodes, n_nodes), dtype=np.int8)
     connect_mtx_PI = np.zeros((n_nodes, n_nodes), dtype=np.int8)
     for i in range(len(T_NET)):
         if T_NET['B'][i] == 0:
-            connect_mtx_rl[T_NET['bus_from'][i]-1, T_NET['bus_to'][i]-1] = 1
+            connect_mtx_rl[int(T_NET['bus_from'][i]-1), int(T_NET['bus_to'][i]-1)] = 1
         else:
-            connect_mtx_PI[T_NET['bus_from'][i]-1, T_NET['bus_to'][i]-1] = 1
+            connect_mtx_PI[int(T_NET['bus_from'][i]-1), int(T_NET['bus_to'][i]-1)] = 1
     connect_mtx_rl = connect_mtx_rl + connect_mtx_rl.T
     connect_mtx_PI = connect_mtx_PI + connect_mtx_PI.T
     connect_mtx = connect_mtx_PI + connect_mtx_rl
@@ -154,7 +154,7 @@ def generate_T_nodes(d_grid):
     
     # Total node number 
     tn = max(T_NET['bus_from'].max(), T_NET['bus_to'].max(), T_trafo['bus_from'].max(), T_trafo['bus_to'].max())     
-    nsb = np.zeros(tn)
+    nsb = np.zeros(int(tn))
     for node in range(1, tn+1):
         nsb[node-1] = sum([T_load['bus'].eq(node).sum(), T_TH['bus'].eq(node).sum(), T_SG['bus'].eq(node).sum(), 
                           T_VSC['bus'].eq(node).sum(), T_MMC['NodeAC'].eq(node).sum(),T_user['bus'].eq(node).sum()])
@@ -199,6 +199,48 @@ def generate_T_nodes(d_grid):
     
     return T_nodes
 
+# def add_trafo(d_grid, connect_mtx_rl, connect_mtx_PI):
+        
+#     T_NET = d_grid['T_NET'].copy()
+#     T_trafo = d_grid['T_trafo']
+#     number = np.max(T_NET['number']) + 1    
+#     missing = []
+    
+#     # 1 -  Check if there are trafos in series
+#     buses_series = np.unique(np.concatenate((T_trafo['bus_from'][T_trafo['bus_from'].isin(T_trafo['bus_to'])], T_trafo['bus_to'][T_trafo['bus_to'].isin(T_trafo['bus_from'])])))
+#     buses_AC_NET = np.concatenate((T_NET['bus_from'], T_NET['bus_to']))
+   
+#     if not np.all(np.isin(buses_series, buses_AC_NET)):
+#         raise ValueError("There are trafos in series. Put them as RL lines in AC-NET.")
+#         # Code could be improved to do this automatically
+    
+#     # 2 - Expand connect_mtx with zeros in order to match the size defined by the highest bus in T_trafo
+#     max_bus_trafo = np.max(np.concatenate((T_trafo['bus_from'], T_trafo['bus_to'])))
+#     max_bus_rl_net = connect_mtx_rl.shape[0]
+    
+#     if max_bus_trafo > max_bus_rl_net:
+#         connect_mtx_rl = np.pad(connect_mtx_rl, ((0, max_bus_trafo - max_bus_rl_net), (0, max_bus_trafo - max_bus_rl_net)), mode='constant')
+    
+#     max_bus_pi_net = connect_mtx_PI.shape[0]
+#     if max_bus_trafo > max_bus_pi_net:
+#         connect_mtx_PI = np.pad(connect_mtx_PI, ((0, max_bus_trafo - max_bus_pi_net), (0, max_bus_trafo - max_bus_pi_net)), mode='constant')
+     
+#      # 3 - Add trafos to connectivity matrix  
+#     for i in range(len(T_trafo)):
+#         if T_trafo['B'][i] == 0:
+#             connect_mtx_rl[int(T_trafo['bus_from'][i]-1), int(T_trafo['bus_to'][i]-1)] = 1
+#             connect_mtx_rl[int(T_trafo['bus_to'][i]-1), int(T_trafo['bus_from'][i]-1)] = 1
+#         else:
+#             connect_mtx_PI[int(T_trafo['bus_from'][i]-1), int(T_trafo['bus_to'][i]-1)] = 1
+#             connect_mtx_PI[int(T_trafo['bus_to'][i]-1), int(T_trafo['bus_from'][i]-1)] = 1
+
+#         T_NET.loc[len(T_NET)] = [number, T_trafo['bus_from'][i], T_trafo['bus_to'][i], T_trafo['R'][i], T_trafo['X'][i], 0, 1, T_trafo['L'][i], T_trafo['C'][i]]
+#         number += 1
+
+#     T_trafo_missing = T_trafo.iloc[missing]
+    
+#     return connect_mtx_rl, T_NET, T_trafo_missing
+
 
 def add_trafo(d_grid, connect_mtx_rl, connect_mtx_PI):
         
@@ -229,14 +271,14 @@ def add_trafo(d_grid, connect_mtx_rl, connect_mtx_PI):
      # 3 - Add trafos to connectivity matrix  
     for tf in range(len(T_trafo)):
         # A) Trafos that are connected to an RL line in ANY bus are added to connect_mtx_RL and to T_NET
-        if np.sum(connect_mtx_rl[T_trafo['bus_from'][tf] - 1, :]) > 0 or np.sum(connect_mtx_rl[T_trafo['bus_to'][tf] - 1, :]) > 0:
-            connect_mtx_rl[T_trafo['bus_from'][tf] - 1, T_trafo['bus_to'][tf] - 1] = 1
-            connect_mtx_rl[T_trafo['bus_to'][tf] - 1, T_trafo['bus_from'][tf] - 1] = 1
+        if np.sum(connect_mtx_rl[int(T_trafo['bus_from'][tf] - 1), :]) > 0 or np.sum(connect_mtx_rl[int(T_trafo['bus_to'][tf] - 1), :]) > 0:
+            connect_mtx_rl[int(T_trafo['bus_from'][tf] - 1), int(T_trafo['bus_to'][tf] - 1)] = 1
+            connect_mtx_rl[int(T_trafo['bus_to'][tf] - 1), int(T_trafo['bus_from'][tf] - 1)] = 1
             T_NET.loc[len(T_NET)] = [number, T_trafo['bus_from'][tf], T_trafo['bus_to'][tf], T_trafo['R'][tf], T_trafo['X'][tf], 0, 1, T_trafo['L'][tf], T_trafo['C'][tf]]
             number += 1
         # B) Trafos connected between PI lines in BOTH buses --> "missing"
         # are not added to any connect_mtx because are built as independent elements
-        elif np.sum(connect_mtx_PI[T_trafo['bus_from'][tf] - 1, :]) > 0 and np.sum(connect_mtx_PI[T_trafo['bus_to'][tf] - 1, :]) > 0:
+        elif np.sum(connect_mtx_PI[int(T_trafo['bus_from'][tf] - 1), :]) > 0 and np.sum(connect_mtx_PI[int(T_trafo['bus_to'][tf] - 1), :]) > 0:
             missing.append(tf)
         # C) The Trafo is connected to a PI line and to a terminal element in one of the buses   
         # the terminal element cannot be a current source !!
