@@ -18,7 +18,7 @@ def create_model(path_raw, name_raw=None):
     grid = FileOpen(raw_file).open()
     return grid
     
-def run_powerflow(grid,solver_type=SolverType.NR, Qconrol_mode=ReactivePowerControlMode.NoControl):
+def run_powerflow(grid,solver_type=SolverType.NR, Qconrol_mode=ReactivePowerControlMode.Direct):
             
     # RUN POWERFLOW
     #for solver_type in [SolverType.IWAMOTO, SolverType.NR, SolverType.LM, SolverType.FASTDECOUPLED]:
