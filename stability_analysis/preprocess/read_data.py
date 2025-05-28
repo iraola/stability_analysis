@@ -10,11 +10,13 @@ def read_sys_data(excel_sys):
     :return: a separate DataFrame for each grid component
     """        
     T_global = pd.read_excel(excel_sys, sheet_name='global')
+    T_global_DC = pd.read_excel(excel_sys, sheet_name='global_DC')
     T_NET = pd.read_excel(excel_sys, sheet_name='AC-NET') 
     T_DC_NET = pd.read_excel(excel_sys, sheet_name='DC-NET') 
     T_trafo = pd.read_excel(excel_sys, sheet_name='trafo')  
     T_load = pd.read_excel(excel_sys, sheet_name='load')  
-    T_TH = pd.read_excel(excel_sys, sheet_name='TH') 
+    T_TH = pd.read_excel(excel_sys, sheet_name='TH')
+    T_shunt = pd.read_excel(excel_sys, sheet_name='SHUNT')
     T_SG = pd.read_excel(excel_sys, sheet_name='SG')  
     T_VSC = pd.read_excel(excel_sys, sheet_name='VSC')  
     T_MMC = pd.read_excel(excel_sys, sheet_name='MMC')  
@@ -22,14 +24,21 @@ def read_sys_data(excel_sys):
     T_user = pd.read_excel(excel_sys, sheet_name='user') 
     T_case = pd.read_excel(excel_sys, sheet_name='CASE') 
     T_buses = pd.read_excel(excel_sys, sheet_name='PF') 
-    T_gen = pd.read_excel(excel_sys, sheet_name='Gen') 
+    try:
+        T_gen = pd.read_excel(excel_sys, sheet_name='Gen') 
+    except:
+        pass
+    T_IPC = pd.read_excel(excel_sys, sheet_name='IPC') 
+    T_sim = pd.read_excel(excel_sys, sheet_name='sim') 
     
     T_global = T_global.rename(columns=lambda x: x.strip())
+    T_global_DC = T_global_DC.rename(columns=lambda x: x.strip())
     T_NET = T_NET.rename(columns=lambda x: x.strip())
     T_DC_NET = T_DC_NET.rename(columns=lambda x: x.strip())
     T_trafo = T_trafo.rename(columns=lambda x: x.strip())  
     T_load = T_load.rename(columns=lambda x: x.strip()) 
     T_TH = T_TH.rename(columns=lambda x: x.strip()) 
+    T_shunt = T_shunt.rename(columns=lambda x: x.strip())     
     T_SG = T_SG.rename(columns=lambda x: x.strip())
     T_VSC = T_VSC.rename(columns=lambda x: x.strip()) 
     T_MMC = T_MMC.rename(columns=lambda x: x.strip())  
@@ -37,8 +46,13 @@ def read_sys_data(excel_sys):
     T_user = T_user.rename(columns=lambda x: x.strip()) 
     T_case = T_case.rename(columns=lambda x: x.strip()) 
     T_buses = T_buses.rename(columns=lambda x: x.strip()) 
-    T_gen = T_gen.rename(columns=lambda x: x.strip()) 
-    
+    try:
+        T_gen = T_gen.rename(columns=lambda x: x.strip()) 
+    except:
+        pass
+    T_IPC = T_IPC.rename(columns=lambda x: x.strip()) 
+    T_sim = T_sim.rename(columns=lambda x: x.strip()) 
+
     # Create copies of original tables 
     T_NET_0 = T_NET.copy()
     T_DC_NET_0 = T_DC_NET.copy()
@@ -51,23 +65,49 @@ def read_sys_data(excel_sys):
     T_user_0 = T_user.copy()
     T_gen_0 = T_gen.copy()
     
-    grid = {
-    'T_global': T_global,
-    'T_NET': T_NET,
-    'T_DC_NET': T_DC_NET,
-    'T_trafo': T_trafo,
-    'T_load': T_load,
-    'T_TH': T_TH,
-    'T_SG': T_SG,
-    'T_VSC': T_VSC,
-    'T_MMC': T_MMC,
-    'T_b2b': T_b2b,
-    'T_user': T_user,
-    'T_gen': T_gen,
-    'T_case': T_case,
-    'T_buses': T_buses,
-    'gen_names': ['TH','SG','VSC','MMC','user'] #list of generator types d_gen = {'SG': T_SG, ...} 
-    }
+    try:
+        grid = {
+        'T_global': T_global,
+        'T_global_DC': T_global_DC,
+        'T_NET': T_NET,
+        'T_DC_NET': T_DC_NET,
+        'T_trafo': T_trafo,
+        'T_load': T_load,
+        'T_TH': T_TH,
+        'T_shunt': T_shunt,
+        'T_SG': T_SG,
+        'T_VSC': T_VSC,
+        'T_MMC': T_MMC,
+        'T_IPC': T_IPC,
+        'T_b2b': T_b2b,
+        'T_user': T_user,
+        'T_gen': T_gen,
+        'T_case': T_case,
+        'T_buses': T_buses,
+        'gen_names': ['TH','SG','VSC','MMC','user'] #list of generator types d_gen = {'SG': T_SG, ...} 
+        }
+    except:    
+    
+        grid = {
+        'T_global': T_global,
+        'T_global_DC': T_global_DC,
+        'T_NET': T_NET,
+        'T_DC_NET': T_DC_NET,
+        'T_trafo': T_trafo,
+        'T_load': T_load,
+        'T_TH': T_TH,
+        'T_shunt': T_shunt,
+        'T_SG': T_SG,
+        'T_VSC': T_VSC,
+        'T_MMC': T_MMC,
+        'T_IPC': T_IPC,
+        'T_b2b': T_b2b,
+        'T_user': T_user,
+        'T_gen': T_gen,
+        'T_case': T_case,
+        'T_buses': T_buses,
+        'gen_names': ['TH','SG','VSC','MMC','user'] #list of generator types d_gen = {'SG': T_SG, ...} 
+        }
     
     grid_0 = {
     'T_NET_0': T_NET_0,
@@ -116,7 +156,7 @@ def tempTables(grid):
 
 #%%
 
-def read_data(file_path):
+def read_data(file_path,create_T_table=False):
     # Create an empty dictionary to store DataFrames
     d_op = {}
 
@@ -129,7 +169,9 @@ def read_data(file_path):
         df = xl.parse(sheet_name)
         
         # Store the DataFrame in the dictionary with sheet name as key
-        d_op[sheet_name] = df
-
+        if create_T_table:
+            d_op['T_'+sheet_name] = df
+        else:
+            d_op[sheet_name] = df
     return d_op
 
