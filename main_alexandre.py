@@ -183,7 +183,7 @@ if __name__ == "__main__":
             # Update PF results and operation point of generator elements
             d_pf = process_powerflow.update_OP(grid, pf_results, d_raw_data)
             
-            d_grid, d_of = fill_d_grid_after_powerflow.fill_d_grid(d_grid,
+            d_grid, d_pf = fill_d_grid_after_powerflow.fill_d_grid(d_grid,
                                                                    grid, d_pf,
                                                                    d_raw_data, d_op)
             
