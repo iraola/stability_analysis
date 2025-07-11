@@ -115,16 +115,22 @@ def assign_PVGen(**kwargs):
     voltage_profile_list=kwargs.get("voltage_profile_list",None)
     indx_id=kwargs.get("indx_id",None)
     V_set=kwargs.get("V_set",None)
+    solved_point = kwargs.get("solved_point",None)
+    d_pf = kwargs.get("d_pf",None)
      
     for gen in GridCal_grid.get_generators():
         bus=gen.bus
         bus_code=int(bus.code)
         
         if bus_code in list(d_raw_data['generator']['I']):
-            if bus.is_slack:
+            #if bus.is_slack:
 
                 gen.Snom=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Snom']
-                gen.P=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
+                if solved_point == None:
+                    gen.P=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
+                else:
+                    gen.P=d_pf['pf_gen'].loc[d_pf['pf_gen'].query('bus == @bus_code').index[0],'P']*100
+                    
                 gen.Qmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmax']
                 gen.Qmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmin']
                 # gen.Qmax=0.33*d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
@@ -134,33 +140,36 @@ def assign_PVGen(**kwargs):
                 gen.Pf=0.95
 
                 if voltage_profile_list!=None:
-                    idx=int(indx_id[np.where(indx_id[:,1]==bus_code),0])
-                    gen.Vset=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'V']=voltage_profile_list[idx]
-                
+                    if solved_point == None:
+                        idx=int(indx_id[np.where(indx_id[:,1]==bus_code),0])
+                        gen.Vset=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'V']=voltage_profile_list[idx]
+                    else:
+                        gen.Vset=d_pf['pf_gen'].loc[d_pf['pf_gen'].query('bus == @bus_code').index[0], 'Vm']
+        
                 elif V_set!=None:
                     gen.Vset=V_set
                 
-            else:
+            # else:
                                           
-                gen_name=bus.code#generators[0].name
+            #     gen_name=bus.code#generators[0].name
                 
                 
-                gen.Snom=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Snom']
-                gen.P=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
-                gen.Qmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmax']
-                gen.Qmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmin']
-                # gen.Qmax=0.33*d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
-                # gen.Qmin=-0.33*d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
-                gen.Pmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmax']
-                gen.Pmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmin']
-                gen.Pf=0.95
+            #     gen.Snom=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Snom']
+            #     gen.P=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
+            #     gen.Qmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmax']
+            #     gen.Qmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Qmin']
+            #     # gen.Qmax=0.33*d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
+            #     # gen.Qmin=-0.33*d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
+            #     gen.Pmax=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmax']
+            #     gen.Pmin=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Pmin']
+            #     gen.Pf=0.95
                 
-                if voltage_profile_list!=None:
-                    idx=int(indx_id[np.where(indx_id[:,1]==bus_code),0])
-                    gen.Vset=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'V']=voltage_profile_list[idx]
+            #     if voltage_profile_list!=None:
+            #         idx=int(indx_id[np.where(indx_id[:,1]==bus_code),0])
+            #         gen.Vset=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'V']=voltage_profile_list[idx]
                 
-                elif V_set!=None:
-                    gen.Vset=V_set
+            #     elif V_set!=None:
+            #         gen.Vset=V_set
                 
                 
 # def assign_V_to_PVGen(GridCal_grid,d_raw_data):

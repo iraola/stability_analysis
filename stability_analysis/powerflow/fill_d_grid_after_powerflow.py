@@ -42,6 +42,42 @@ def fill_d_grid(d_grid, GridCal_grid, d_pf, d_raw_data, d_op):
     
     return d_grid, d_pf
 
+def fill_d_grid_contingency_analysis(d_grid, d_pf, d_raw_data, GridCal_grid):
+    
+    ## T_gen
+    SG=['SG']
+    VSC=['GFOL','GFOR']
+    
+    for gen in [SG,VSC]: 
+        for element in gen:
+            buses =  list(d_grid['T_gen'].query('element == @element')['bus'])
+            for bus in buses: 
+                d_grid['T_gen'].loc[d_grid['T_gen'].query('bus == @bus and element==@element').index[0],'P']= d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus').index[0],'alpha_P_'+element]*d_pf['pf_gen'].loc[d_pf['pf_gen'].query('bus == @bus').index[0],'P']
+                
+                d_grid['T_gen'].loc[d_grid['T_gen'].query('bus == @bus and element==@element').index[0],'Q']= d_grid['T_gen'].loc[d_grid['T_gen'].query('bus == @bus and element==@element').index[0],'P']*np.tan(np.arccos(d_pf['pf_gen'].loc[d_pf['pf_gen'].query('bus == @bus').index[0],'cosphi']))*np.sign(d_pf['pf_gen'].loc[d_pf['pf_gen'].query('bus == @bus').index[0],'Q'])
+            
+                d_grid['T_gen'].loc[d_grid['T_gen'].query('bus == @bus and element==@element').index[0],'V']= d_pf['pf_gen'].loc[d_pf['pf_gen'].query('bus == @bus').index[0],'Vm']
+                d_grid['T_gen'].loc[d_grid['T_gen'].query('bus == @bus and element==@element').index[0],'theta']= d_pf['pf_gen'].loc[d_pf['pf_gen'].query('bus == @bus').index[0],'theta']
+            
+    ## T_SG    
+    for bus in list(d_grid['T_gen'].query('element == "SG"')):
+        d_grid['T_SG'].loc[d_grid['T_SG'].query('bus == @bus').index, ['P','Q','V','theta']]= d_grid['T_gen'].loc[d_grid['T_gen'].query('element == "SG" and bus== @bus').index,['P','Q','V','theta']]
+    
+    ## T_VSC   
+    for bus in list(d_grid['T_gen'].query('element == "GFOR"')):
+        d_grid['T_VSC'].loc[d_grid['T_VSC'].query('bus == @bus and mode == "GFOR"').index, ['P','Q','V','theta']]= d_grid['T_gen'].loc[d_grid['T_gen'].query('element == "GFOR" and bus== @bus').index,['P','Q','V','theta']]
+    for bus in list(d_grid['T_gen'].query('element == "GFOL"')):
+        d_grid['T_VSC'].loc[d_grid['T_VSC'].query('bus == @bus and mode == "GFOL"').index, ['P','Q','V','theta']]= d_grid['T_gen'].loc[d_grid['T_gen'].query('element == "GFOL" and bus== @bus').index,['P','Q','V','theta']]
+
+    ##T_buses
+    d_grid = fill_BUSES(d_grid, d_pf, d_raw_data)
+    
+    # T_loads Calculate RX loads
+    d_grid['T_load'] = calculate_R_X_loads(d_grid['T_load'], d_pf['pf_load'], GridCal_grid)
+    
+
+    return d_grid
+
 def clean_d_grid_df(d_grid):
     
     for key in d_grid.keys():
