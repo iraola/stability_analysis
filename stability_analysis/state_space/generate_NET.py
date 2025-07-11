@@ -6,7 +6,7 @@ from control.matlab import ss
 from stability_analysis.preprocess import preprocess_data
 from stability_analysis.state_space import interconnect
 
-def save_ss_matrices_fun(ss,path,filename):
+def save_ss_matrices_fun(ss,filename, path='C:/Users/Francesca/Desktop/state_space_test/contingency/'):
     pd.DataFrame.to_csv(pd.DataFrame(ss.A),path+filename+'_A.csv',index=False,header=False)
     pd.DataFrame.to_csv(pd.DataFrame(ss.B),path+filename+'_B.csv',index=False,header=False)
     pd.DataFrame.to_csv(pd.DataFrame(ss.C),path+filename+'_C.csv',index=False,header=False)
@@ -101,12 +101,12 @@ def xb2lc(d_grid):
     """
     
     T_buses = d_grid['T_buses']
-#    T_buses['fb'] = d_grid['T_buses']['SyncArea'].map(d_grid['T_global'].set_index('SyncArea')['fb']) 
-    for SyncArea, fb in d_grid['T_global'].set_index('SyncArea')[['fb']].iterrows():
-        # print(SyncArea)
-        # print(fb)
+    T_buses['fb'] = d_grid['T_buses']['SyncArea'].map(d_grid['T_global'].set_index('SyncArea')['fb']) 
+    # for SyncArea, fb in d_grid['T_global'].set_index('SyncArea')[['fb']].iterrows():
+    #     # print(SyncArea)
+    #     # print(fb)
         
-        T_buses.loc[T_buses.query('SyncArea == @SyncArea').index,'fb'] =  fb[0]
+    #     T_buses.loc[T_buses.query('SyncArea == @SyncArea').index,'fb'] =  fb[0]
         
     d_grid['T_NET']['L'] = d_grid['T_NET']['X'] / (2 * np.pi * d_grid['T_NET']['bus_from'].map(T_buses.set_index('bus')['fb']))
     d_grid['T_NET']['C'] = d_grid['T_NET']['B'] / (2 * np.pi * d_grid['T_NET']['bus_from'].map(T_buses.set_index('bus')['fb'])) / 2
@@ -614,28 +614,21 @@ def generate_general_rl_NET_v3(connect_mtx_rl, rl_T_nodes, PI_T_nodes, rl_T_NET,
             if connect_fun=='interconnect':
                 SS_RL = ct.interconnect(list_ss_rl+list_ss_union, states = list_x_rl, inputs = inputs, outputs = outputs, check_unused = False)
                 if save_ss_matrices==True:
-                    save_ss_matrices_fun(SS_RL,'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/'+connect_fun+'_test/',
-                                            f'{SS_RL=}'.split('=')[0])
+                    save_ss_matrices_fun(SS_RL,f'{SS_RL=}'.split('=')[0])
             elif connect_fun=='append_and_connect':
                 SS_RL = interconnect.interconnect(list_ss_rl+list_ss_union, states = list_x_rl, inputs = inputs, outputs = outputs, check_unused = False)
                 if save_ss_matrices == True:
-                    save_ss_matrices_fun(SS_RL,
-                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun+'_test/',
-                                          f'{SS_RL=}'.split('=')[0])
+                    save_ss_matrices_fun(SS_RL, f'{SS_RL=}'.split('=')[0])
         else:
             if connect_fun == 'interconnect':
                 SS_RL = ct.interconnect(list_ss_rl, inputs = inputs, outputs = outputs, check_unused = False)
                 if save_ss_matrices == True:
-                    save_ss_matrices_fun(SS_RL,
-                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                         f'{SS_RL=}'.split('=')[0])
+                    save_ss_matrices_fun(SS_RL, f'{SS_RL=}'.split('=')[0])
             elif connect_fun == 'append_and_connect':
                 SS_RL = interconnect.interconnect(list_ss_rl, inputs = inputs, outputs = outputs, check_unused = False)
 
                 if save_ss_matrices == True:
-                    save_ss_matrices_fun(SS_RL,
-                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                         f'{SS_RL=}'.split('=')[0])
+                    save_ss_matrices_fun(SS_RL, f'{SS_RL=}'.split('=')[0])
         # Append SS to l_blocks
         l_blocks.append(SS_RL)
         l_states.extend(list_x_rl)
@@ -895,16 +888,12 @@ def generate_general_PI_NET(connect_mtx_PI, connect_mtx_rl, PI_T_nodes, T_trafo_
                                      outputs=llista_y_AC, check_unused=False)
 
             if save_ss_matrices == True:
-                save_ss_matrices_fun(PI_NET,
-                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                         f'{PI_NET=}'.split('=')[0])
+                save_ss_matrices_fun(PI_NET, f'{PI_NET=}'.split('=')[0])
         elif connect_fun == 'append_and_connect':
             PI_NET = interconnect.interconnect(llista_SS_rl + llista_SS_C + llista_SS_nus, states=llista_x_AC, inputs=llista_u_AC,
                                      outputs=llista_y_AC, check_unused=False)
             if save_ss_matrices == True:
-                save_ss_matrices_fun(PI_NET,
-                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                     f'{PI_NET=}'.split('=')[0])
+                save_ss_matrices_fun(PI_NET, f'{PI_NET=}'.split('=')[0])
         #Append SS to l_blocks 
         l_blocks.append(PI_NET)
         l_states.extend(llista_x_AC)
@@ -1074,17 +1063,13 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
             load = ct.interconnect([SS_l, SS_r, SS_nus], states=xl, inputs=uLoad, outputs=ynus, check_unused=False)
 
             if save_ss_matrices == True:
-                save_ss_matrices_fun(load,
-                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                         f'{load=}'.split('=')[0]+str(n_load))
+                save_ss_matrices_fun(load, f'{load=}'.split('=')[0]+str(n_load))
         elif connect_fun == 'append_and_connect':
             load = interconnect.interconnect([SS_l, SS_r, SS_nus], states=xl, inputs=uLoad, outputs=ynus, check_unused=False)
 
             
             if save_ss_matrices == True:
-                save_ss_matrices_fun(load,
-                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                     f'{load=}'.split('=')[0]+str(n_load))
+                save_ss_matrices_fun(load, f'{load=}'.split('=')[0]+str(n_load))
 
         return load, xl, n_load
     
@@ -1153,17 +1138,13 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
             load = ct.interconnect([SS_l, SS_r, SS_nus], states=xl, inputs=uLoad, outputs=ynus, check_unused=False)
 
             if save_ss_matrices == True:
-                save_ss_matrices_fun(load,
-                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                         f'{load=}'.split('=')[0])
+                save_ss_matrices_fun(load, f'{load=}'.split('=')[0])
         elif connect_fun == 'append_and_connect':
             load = interconnect.interconnect([SS_l, SS_r, SS_nus], states=xl, inputs=uLoad, outputs=ynus, check_unused=False)
 
 
             if save_ss_matrices == True:
-                save_ss_matrices_fun(load,
-                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                     f'{load=}'.split('=')[0])
+                save_ss_matrices_fun(load, f'{load=}'.split('=')[0])
         return load, xl
     
     
@@ -1242,16 +1223,12 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
             load = ct.interconnect([SS_r, SS_nus], inputs=uLoad, outputs=yLoad, check_unused=False)
 
             if save_ss_matrices == True:
-                save_ss_matrices_fun(load,
-                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                         f'{load=}'.split('=')[0])
+                save_ss_matrices_fun(load, f'{load=}'.split('=')[0])
         elif connect_fun == 'append_and_connect':
             load = interconnect.interconnect([SS_r, SS_nus], inputs=uLoad, outputs=yLoad, check_unused=False)
 
             if save_ss_matrices == True:
-                save_ss_matrices_fun(load,
-                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                     f'{load=}'.split('=')[0])
+                save_ss_matrices_fun(load, f'{load=}'.split('=')[0])
         return load
         
     
@@ -1344,16 +1321,12 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
                 load = ct.interconnect([SS_r, SS_nus_rl, SS_l, SS_nus], states=xl, inputs=uLoad, outputs=yLoad)
 
                 if save_ss_matrices == True:
-                    save_ss_matrices_fun(load,
-                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                         f'{load=}'.split('=')[0])
+                    save_ss_matrices_fun(load, f'{load=}'.split('=')[0])
             elif connect_fun == 'append_and_connect':
                 load = interconnect.interconnect([SS_r, SS_nus_rl, SS_l, SS_nus], states=xl, inputs=uLoad, outputs=yLoad)
 
                 if save_ss_matrices == True:
-                    save_ss_matrices_fun(load,
-                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                         f'{load=}'.split('=')[0])
+                    save_ss_matrices_fun(load, f'{load=}'.split('=')[0])
 
 
         else:
@@ -1373,16 +1346,12 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
                 load = ct.interconnect([SS_r, SS_nus], inputs=uLoad, outputs=yLoad)
 
                 if save_ss_matrices == True:
-                    save_ss_matrices_fun(load,
-                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                         f'{load=}'.split('=')[0])
+                    save_ss_matrices_fun(load, f'{load=}'.split('=')[0])
             elif connect_fun == 'append_and_connect':
                 load = interconnect.interconnect([SS_r, SS_nus], inputs=uLoad, outputs=yLoad)
 
                 if save_ss_matrices == True:
-                    save_ss_matrices_fun(load,
-                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                         f'{load=}'.split('=')[0])
+                    save_ss_matrices_fun(load, f'{load=}'.split('=')[0])
 
 
         return load, xl

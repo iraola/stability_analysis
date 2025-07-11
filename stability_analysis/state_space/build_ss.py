@@ -2,7 +2,7 @@ import control as ct
 from stability_analysis.state_space import interconnect
 import pandas as pd
 
-def save_ss_matrices_fun(ss,path,filename):
+def save_ss_matrices_fun(ss,filename, path='C:/Users/Francesca/Desktop/state_space_test/contingency/'):
     pd.DataFrame.to_csv(pd.DataFrame(ss.A),path+filename+'_A.csv',index=False,header=False)
     pd.DataFrame.to_csv(pd.DataFrame(ss.B),path+filename+'_B.csv',index=False,header=False)
     pd.DataFrame.to_csv(pd.DataFrame(ss.C),path+filename+'_C.csv',index=False,header=False)
@@ -43,17 +43,13 @@ def connect(l_blocks, l_states, inputs, outputs, connect_fun='append_and_connect
         ss_sys = ct.interconnect(l_blocks, states = l_states, inputs = inputs, outputs = outputs, check_unused = False)    
 
         if save_ss_matrices == True:
-            save_ss_matrices_fun(ss_sys,
-                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                     f'{ss_sys=}'.split('=')[0])
+            save_ss_matrices_fun(ss_sys, f'{ss_sys=}'.split('=')[0])
     elif connect_fun == 'append_and_connect':
         ss_sys = interconnect.interconnect(l_blocks, states = l_states, inputs = inputs, outputs = outputs, check_unused = False)    
 
         
         if save_ss_matrices == True:
-            save_ss_matrices_fun(ss_sys,
-                                 'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
-                                 f'{ss_sys=}'.split('=')[0])                                       
+            save_ss_matrices_fun(ss_sys, f'{ss_sys=}'.split('=')[0])                                       
             
     #ss_sys._remove_useless_states() 
     return ss_sys
