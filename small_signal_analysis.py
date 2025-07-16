@@ -7,7 +7,7 @@ from stability_analysis.analysis import small_signal
 
 
 from GridCalEngine.Simulations.OPF.NumericalMethods.ac_opf import run_nonlinear_opf, ac_optimal_power_flow
-from GridCalEngine.DataStructures.numerical_circuit import compile_numerical_circuit_at
+#from GridCalEngine.DataStructures.numerical_circuit import compile_numerical_circuit_at
 import GridCalEngine.api as gce
 
 # from .constants import NAN_COLUMN_NAME, OUTPUT_DF_NAMES, COMPUTING_TIME_NAMES
@@ -277,7 +277,7 @@ def calculate_small_signal(d_raw_data,d_op, gridCal_grid, d_grid, d_sg, d_vsc, d
         False default option
     """
     connect_fun = 'append_and_connect'
-    save_ss_matrices = True
+    save_ss_matrices = False
 
     l_blocks, l_states, d_grid = generate_NET.generate_SS_NET_blocks(
         d_grid, delta_slk, connect_fun, save_ss_matrices)

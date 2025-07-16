@@ -1,6 +1,7 @@
 from GridCalEngine.IO.file_handler import FileOpen
 from GridCalEngine.Simulations.PowerFlow.power_flow_worker import PowerFlowOptions
-from GridCalEngine.Simulations.PowerFlow.power_flow_options import ReactivePowerControlMode, SolverType
+from GridCalEngine.Simulations.PowerFlow.power_flow_options import SolverType
+#from GridCalEngine.Simulations.PowerFlow.power_flow_options import ReactivePowerControlMode, SolverType
 from GridCalEngine.Simulations.PowerFlow.power_flow_driver import PowerFlowDriver
 
 import numpy as np
@@ -18,7 +19,7 @@ def create_model(path_raw, name_raw=None):
     grid = FileOpen(raw_file).open()
     return grid
     
-def run_powerflow(grid,solver_type=SolverType.NR, Qconrol_mode=ReactivePowerControlMode.Direct):
+def run_powerflow(grid,solver_type=SolverType.NR,  Qconrol_mode=False):#Qconrol_mode=ReactivePowerControlMode.Direct):
             
     # RUN POWERFLOW
     #for solver_type in [SolverType.IWAMOTO, SolverType.NR, SolverType.LM, SolverType.FASTDECOUPLED]:
