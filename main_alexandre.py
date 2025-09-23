@@ -279,7 +279,7 @@ if __name__ == "__main__":
                                           opf_options= opf_options,
                                           # debug: bool = False,
                                           #use_autodiff = True,
-                                          pf_init= True,
+                                          pf_init= False,
                                           Sbus_pf= pf_results.Sbus,
                                           voltage_pf= pf_results.voltage,
                                           plot_error= True)
