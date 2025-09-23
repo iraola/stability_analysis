@@ -277,7 +277,7 @@ def calculate_small_signal(d_raw_data,d_op, gridCal_grid, d_grid, d_sg, d_vsc, d
         False default option
     """
     connect_fun = 'append_and_connect'
-    save_ss_matrices = True
+    save_ss_matrices = False
 
     l_blocks, l_states, d_grid = generate_NET.generate_SS_NET_blocks(
         d_grid, delta_slk, connect_fun, save_ss_matrices)
