@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from scipy import linalg
 import matplotlib.pyplot as plt
+from memory_profiler import profile
 
 # Set LaTeX font for matplotlib
 plt.rcParams.update({
@@ -10,7 +11,7 @@ plt.rcParams.update({
     'font.size': 8
 })
 
-
+@profile
 def FEIG(ss_sys, plot=False):
     """
     Calculate the eigenvalues of a state-space system and optionally generate a pole map.
