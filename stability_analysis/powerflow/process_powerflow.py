@@ -12,8 +12,10 @@ def update_OP(GridCal_grid, pf_results, d_raw_data):
         
     d_pf = {'pf_bus':pf_bus, 'pf_load': pf_load, 'pf_gen': pf_gen}
     
-    d_pf = assign_region_to_generator(d_pf,d_raw_data)
-    
+    try:
+        d_pf = assign_region_to_generator(d_pf,d_raw_data)
+    except:
+        pass
     return d_pf
     
 def update_OP_OPFsolution(GridCal_grid, pf_results):
