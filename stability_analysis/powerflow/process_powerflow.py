@@ -12,10 +12,8 @@ def update_OP(GridCal_grid, pf_results, d_raw_data):
         
     d_pf = {'pf_bus':pf_bus, 'pf_load': pf_load, 'pf_gen': pf_gen}
     
-    try:
-        d_pf = assign_region_to_generator(d_pf,d_raw_data)
-    except:
-        pass
+    d_pf = assign_region_to_generator(d_pf,d_raw_data)
+    
     return d_pf
     
 def update_OP_OPFsolution(GridCal_grid, pf_results):
@@ -68,22 +66,27 @@ def process_GridCal_PF_loadPQ(GridCal_grid, pf_results):
     
     Sbase = GridCal_grid.Sbase
     
+    try: 
+        results = pf_results.results
+    except:
+        results = pf_results
+    
     # pf_bus: voltage and angle in buses
     
     bus = [int(bus) for bus in [bus.code for bus in GridCal_grid.buses]]
        
-    Vm = np.abs(pf_results.results.voltage)
-    theta = np.angle(pf_results.results.voltage, deg=True) 
-    P= list(PowerFlowResults.get_bus_df(pf_results.results)['P'])
-    Q= list(PowerFlowResults.get_bus_df(pf_results.results)['Q'])
-    pf_bus = pd.DataFrame({'bus':bus, 'Vm': Vm, 'theta':theta,'P':P,'Q':Q, 'type':pf_results.results.bus_types})
+    Vm = np.abs(results.voltage)
+    theta = np.angle(results.voltage, deg=True) 
+    P= list(PowerFlowResults.get_bus_df(results)['P'])
+    Q= list(PowerFlowResults.get_bus_df(results)['Q'])
+    pf_bus = pd.DataFrame({'bus':bus, 'Vm': Vm, 'theta':theta,'P':P,'Q':Q, 'type':results.bus_types})
         
     # pf_load: active and reactive power in loads
     
     bus_load = [int(load.bus.code) for load in GridCal_grid.get_loads()]   
     idx_load = [i for i, bus in enumerate(bus) if bus in bus_load]   
-    Vm = np.abs([pf_results.results.voltage[idx] for idx in idx_load])
-    theta = np.angle([pf_results.results.voltage[idx] for idx in idx_load], deg=True)     
+    Vm = np.abs([results.voltage[idx] for idx in idx_load])
+    theta = np.angle([results.voltage[idx] for idx in idx_load], deg=True)     
     
     P = np.array([load.P for load in GridCal_grid.loads])/Sbase
     Q = np.array([load.Q for load in GridCal_grid.loads])/Sbase
@@ -100,8 +103,8 @@ def process_GridCal_PF_loadPQ(GridCal_grid, pf_results):
     bus_gen = [int(gen.bus.code) for gen in GridCal_grid.get_generators() + GridCal_grid.get_static_generators()]   
     idx_gen = [np.where(np.array(bus)==b)[0][0] for b in bus_gen]
 
-    Vm = np.abs([pf_results.results.voltage[idx] for idx in idx_gen])
-    theta = np.angle([pf_results.results.voltage[idx] for idx in idx_gen], deg=True) 
+    Vm = np.abs([results.voltage[idx] for idx in idx_gen])
+    theta = np.angle([results.voltage[idx] for idx in idx_gen], deg=True) 
     
     P=[]
     Q=[]
@@ -109,8 +112,8 @@ def process_GridCal_PF_loadPQ(GridCal_grid, pf_results):
     for gen in GridCal_grid.get_generators():
         idx=np.where(np.array(bus)==int(gen.bus.code))[0][0]
         
-        P_bus=np.real(pf_results.results.Sbus[idx])/Sbase
-        Q_bus=np.imag(pf_results.results.Sbus[idx])/Sbase
+        P_bus=np.real(results.Sbus[idx])/Sbase
+        Q_bus=np.imag(results.Sbus[idx])/Sbase
         
         try:
             idx=np.where(np.array(bus_load)==int(gen.bus.code))[0][0]
