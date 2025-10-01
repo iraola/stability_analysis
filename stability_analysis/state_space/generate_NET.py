@@ -32,7 +32,7 @@ def generate_SS_NET_blocks(d_grid, delta_slk, connect_fun='append_and_connect',s
 
     The generated State-Space blocks and associated state labels are returned along with the updated power grid model.
     """
-        
+    print("generate_SS_NET_blocks 1")    
     l_blocks = [] # Create list to store subsystems blocks
     l_states = [] # Create list to store subsystems state labels
     d_grid = xb2lc(d_grid) # Convert X,B columns to R,L
@@ -41,42 +41,48 @@ def generate_SS_NET_blocks(d_grid, delta_slk, connect_fun='append_and_connect',s
     # Generates the Connectivity Matrix and the Table of nodes for the AC grid:
     connect_mtx, connect_mtx_PI, connect_mtx_rl = generate_general_connect_mtx(d_grid)
     T_nodes = generate_T_nodes(d_grid)      
-    
+    print("generate_SS_NET_blocks 2")      
     # RL NET:    
     # Manage transformers:
     connect_mtx_rl, T_NET_wTf, T_trafo_missing = add_trafo(d_grid, connect_mtx_rl, connect_mtx_PI)
+    print("generate_SS_NET_blocks 3")  
     # rl_T_nodes: includes nodes where any RL/trafo is connected + "Additional TH" nodes
-    rl_T_nodes = generate_specific_T_nodes_v2(connect_mtx_rl, T_nodes);    
+    rl_T_nodes = generate_specific_T_nodes_v2(connect_mtx_rl, T_nodes); 
+    print("generate_SS_NET_blocks 4")   
     # Manage TH: 
     connect_mtx_rl, T_NET_wTf_wTh, T_TH_missing, rl_T_nodes = add_TH(d_grid['T_TH'], connect_mtx_rl, connect_mtx_PI, T_NET_wTf, rl_T_nodes)        
+    print("generate_SS_NET_blocks 5")
     # rl_T_NET: includes RL lines + trafos connected to any RL + "Additional TH" lines       
-    rl_T_NET = get_specific_NET(connect_mtx_rl, T_NET_wTf_wTh)    
+    rl_T_NET = get_specific_NET(connect_mtx_rl, T_NET_wTf_wTh) 
+    print("generate_SS_NET_blocks 6")  
     # Get PI T_nodes
     PI_T_nodes = generate_specific_T_nodes_v2(connect_mtx_PI, T_nodes);
+    print("generate_SS_NET_blocks 7")
     # Generate the State-Space of the AC RL grid
     l_blocks, l_states = generate_general_rl_NET_v3(connect_mtx_rl, rl_T_nodes, PI_T_nodes, rl_T_NET, d_grid['T_global'], l_blocks, l_states,
                                                     connect_fun,save_ss_matrices)
-       
+    print("generate_SS_NET_blocks 8")
     # PI NET         
     PI_T_NET = get_specific_NET(connect_mtx_PI, d_grid['T_NET'])
     # Generates the State-Space of the AC PI grid
+    print("generate_SS_NET_blocks 9")
     l_blocks, l_states = generate_general_PI_NET(connect_mtx_PI, connect_mtx_rl, PI_T_nodes, T_trafo_missing, d_grid, l_blocks, l_states,
                                                  connect_fun,save_ss_matrices)
-        
+    print("generate_SS_NET_blocks 10")        
     # Trafos 
     l_blocks, l_states = build_trafo(T_trafo_missing, d_grid['T_global']['fb'][0], l_blocks, l_states)
-    
+    print("generate_SS_NET_blocks 11")    
     # TH 
     l_blocks, l_states = build_TH(T_TH_missing, d_grid['T_global']['fb'][0], l_blocks, l_states)   
-    
+    print("generate_SS_NET_blocks 12")    
     # Loads
     l_blocks, l_states = build_load(d_grid['T_load'], connect_mtx_PI, connect_mtx_rl, T_nodes, d_grid['T_global']['fb'][0], delta_slk, l_blocks, l_states,
                                     connect_fun,save_ss_matrices)
-            
+    print("generate_SS_NET_blocks 13")            
     # DC Grid
     # Generate_DC_connectivity_matrix
     l_blocks, l_states = generate_DC_NET(d_grid['T_DC_NET'], l_blocks, l_states)
-        
+    print("generate_SS_NET_blocks 14")         
     return l_blocks, l_states, d_grid
 
 

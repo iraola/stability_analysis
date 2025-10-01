@@ -24,24 +24,42 @@ def FEIG(ss_sys, plot=False):
     - T_EIG: Pandas DataFrame
         Table containing mode ID, real parts, imaginary parts, frequencies, and damping ratios of eigenvalues.
     """
-    
+    aux = 0
+    aux = aux+1
+    print(f"calculate_FEIG {aux}")
     # Compute state-space system eigenvalues
-    eig = linalg.eig(ss_sys.A, left=False, right=False)
-    
+    print(ss_sys.A.shape)
+    try:
+        eig = linalg.eig(ss_sys.A, left=False, right=False)
+    except Exception as e:
+        print(e)
+    aux = aux+1
+    print(f"calculate_FEIG {aux}") 
     # Compute real, imaginary, damping and frequency
-    real = np.real(eig)
+    real = np.real(eig) 
+    aux = aux+1
+    print(f"calculate_FEIG {aux}")
     imag = np.imag(eig)
+    aux = aux+1
+    print(f"calculate_FEIG {aux}")
     damp = -real/np.absolute(eig)
+    aux = aux+1
+    print(f"calculate_FEIG {aux}")
     freq = np.absolute(imag)/(2*np.pi)
-    
+    aux = aux+1
+    print(f"calculate_FEIG {aux}")
     # Generate table    
     T_EIG = pd.DataFrame({'real':real, 'imag':imag, 'freq':freq, 'damp':damp})
+    aux = aux+1
+    print(f"calculate_FEIG {aux}")
     T_EIG = T_EIG.sort_values(by='real', ascending = False)
-    
+    aux = aux+1
+    print(f"calculate_FEIG {aux}")
     # Add mode ID
     mode = list(range(1,len(T_EIG)+1))
     T_EIG.insert(0,"mode",mode)
-    
+    aux = aux+1
+    print(f"calculate_FEIG {aux}")
     # Create pole map
 
     if plot:
@@ -52,7 +70,8 @@ def FEIG(ss_sys, plot=False):
         plt.ylabel('Imaginary')
         plt.grid(True)
         plt.show()
-    
+    aux = aux+1
+    print(f"calculate_FEIG {aux}")
     return T_EIG
 
 

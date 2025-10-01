@@ -220,9 +220,9 @@ def calculate_small_signal(d_raw_data,d_op, gridCal_grid, d_grid, d_sg, d_vsc, d
 
 #     #########################################################################
 
-
+    print("calculate_small_signal 1")
     d_grid = fill_d_grid_after_powerflow.fill_d_grid_contingency_analysis(d_grid, d_opf, d_raw_data, gridCal_grid)
-
+    print("calculate_small_signal 2")
     # p_sg = np.sum(d_grid['T_gen'].query('element == "SG"')['P']) * 100
     # p_cig = np.sum(d_grid['T_gen'].query('element != "SG"')['P']) * 100
     # if p_cig!=0:
@@ -251,18 +251,18 @@ def calculate_small_signal(d_raw_data,d_op, gridCal_grid, d_grid, d_sg, d_vsc, d
     #         return stability, output_dataframes
 
     # %% READ PARAMETERS
-
+    print("calculate_small_signal 3")
     # Get parameters of generator units from excel files & compute pu base
     d_grid = parameters.get_params(d_grid, d_sg, d_vsc)
-
+    print("calculate_small_signal 4")
     # d_grid = update_control(case, d_grid)
-
+    print("calculate_small_signal 5")
     # Assign slack bus and slack element
     d_grid = slack_bus.assign_slack(d_grid)
-
+    print("calculate_small_signal 6")
     # Compute reference angle (delta_slk)
     d_grid, REF_w, num_slk, delta_slk = slack_bus.delta_slk(d_grid)
-
+    print("calculate_small_signal 7")
     # %% GENERATE STATE-SPACE MODEL
 
     # Generate AC & DC NET State-Space Model
@@ -281,7 +281,7 @@ def calculate_small_signal(d_raw_data,d_op, gridCal_grid, d_grid, d_sg, d_vsc, d
 
     l_blocks, l_states, d_grid = generate_NET.generate_SS_NET_blocks(
         d_grid, delta_slk, connect_fun, save_ss_matrices)
-
+    print("calculate_small_signal 8")
     #end = time.perf_counter()
     #computing_times['time_generate_SS_net'] = end - start
 
@@ -292,7 +292,7 @@ def calculate_small_signal(d_raw_data,d_op, gridCal_grid, d_grid, d_sg, d_vsc, d
         d_grid, delta_slk, l_blocks, l_states, connect_fun, save_ss_matrices)
     #end = time.perf_counter()
     #computing_times['time_generate_SS_elem'] = end - start
-
+    print("calculate_small_signal 9")
     # %% BUILD FULL SYSTEM STATE-SPACE MODEL
 
     # Define full system inputs and ouputs
@@ -303,9 +303,10 @@ def calculate_small_signal(d_raw_data,d_op, gridCal_grid, d_grid, d_sg, d_vsc, d
     #start = time.perf_counter()
 
     inputs, outputs = build_ss.select_io(l_blocks, var_in, var_out)
-    ss_sys = build_ss.connect(l_blocks, l_states, inputs, outputs, connect_fun,
-                              save_ss_matrices)
 
+    ss_sys = build_ss.connect(l_blocks, l_states, inputs, outputs, connect_fun, False)
+    #ss_sys = build_ss.connect(l_blocks, l_states, inputs, outputs, connect_fun,save_ss_matrices)
+    print("calculate_small_signal 10")
     #end = time.perf_counter()
     #computing_times['time_connect'] = end - start
 
@@ -313,11 +314,11 @@ def calculate_small_signal(d_raw_data,d_op, gridCal_grid, d_grid, d_sg, d_vsc, d
     # %% SMALL-SIGNAL ANALYSIS
 
     #start = time.perf_counter()
-
+    print(ss_sys.A)
 
     T_EIG = small_signal.FEIG(ss_sys, False)
     T_EIG.head
-
+    print("calculate_small_signal 11")
     #end = time.perf_counter()
     #computing_times['time_eig'] = end - start
 
@@ -325,10 +326,11 @@ def calculate_small_signal(d_raw_data,d_op, gridCal_grid, d_grid, d_sg, d_vsc, d
     # write to excel
     # T_EIG.to_excel(path.join(path_results, "EIG_" + excel + ".xlsx"))
 
+    # Si es 0 es inestable y si es 1 es estable
     if max(T_EIG['real'] >= 0):
-        stability = 0
+        stability = 0 #False, no estable
     else:
-        stability = 1
+        stability = 1 #True, estable
         
     #%% write excel files
     
