@@ -304,14 +304,9 @@ def calculate_small_signal(d_raw_data,d_op, gridCal_grid, d_grid, d_sg, d_vsc, d
     #start = time.perf_counter()
 
     inputs, outputs = build_ss.select_io(l_blocks, var_in, var_out)
-<<<<<<< HEAD
 
     ss_sys = build_ss.connect(l_blocks, l_states, inputs, outputs, connect_fun, False)
     #ss_sys = build_ss.connect(l_blocks, l_states, inputs, outputs, connect_fun,save_ss_matrices)
-=======
-    ss_sys = build_ss.connect(l_blocks, l_states, inputs, outputs, connect_fun,
-                              save_ss_matrices)
->>>>>>> e9cc778800881b59c3cd5be0b547eab67710025d
     print("calculate_small_signal 10")
     #end = time.perf_counter()
     #computing_times['time_connect'] = end - start
