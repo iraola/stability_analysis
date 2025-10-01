@@ -26,7 +26,8 @@ import GridCalEngine.api as gce
 
 from GridCalEngine.Simulations.PowerFlow.power_flow_worker import multi_island_pf_nc
 
-@mp.profile
+# Memory profiler comentado para que no pete el debugger
+#@mp.profile
 def calculate_small_signal(d_raw_data,d_op, gridCal_grid, d_grid, d_sg, d_vsc, d_opf):
     """
     Runs the alternating current optimal power flow (ACOPF) stability analysis.
