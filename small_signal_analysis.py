@@ -5,6 +5,7 @@ from stability_analysis.preprocess import parameters
 from stability_analysis.state_space import build_ss, generate_NET, generate_elements
 from stability_analysis.analysis import small_signal
 
+import memory_profiler as mp
 
 from GridCalEngine.Simulations.OPF.NumericalMethods.ac_opf import run_nonlinear_opf, ac_optimal_power_flow
 #from GridCalEngine.DataStructures.numerical_circuit import compile_numerical_circuit_at
@@ -25,7 +26,7 @@ import GridCalEngine.api as gce
 
 from GridCalEngine.Simulations.PowerFlow.power_flow_worker import multi_island_pf_nc
 
-
+@mp.profile
 def calculate_small_signal(d_raw_data,d_op, gridCal_grid, d_grid, d_sg, d_vsc, d_opf):
     """
     Runs the alternating current optimal power flow (ACOPF) stability analysis.
@@ -303,9 +304,14 @@ def calculate_small_signal(d_raw_data,d_op, gridCal_grid, d_grid, d_sg, d_vsc, d
     #start = time.perf_counter()
 
     inputs, outputs = build_ss.select_io(l_blocks, var_in, var_out)
+<<<<<<< HEAD
 
     ss_sys = build_ss.connect(l_blocks, l_states, inputs, outputs, connect_fun, False)
     #ss_sys = build_ss.connect(l_blocks, l_states, inputs, outputs, connect_fun,save_ss_matrices)
+=======
+    ss_sys = build_ss.connect(l_blocks, l_states, inputs, outputs, connect_fun,
+                              save_ss_matrices)
+>>>>>>> e9cc778800881b59c3cd5be0b547eab67710025d
     print("calculate_small_signal 10")
     #end = time.perf_counter()
     #computing_times['time_connect'] = end - start
