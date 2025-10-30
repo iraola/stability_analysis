@@ -1367,8 +1367,8 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
     n_load=0
     for _,row in T_load.iterrows():
         
-        bus = row['bus']
-        L = row['L']
+        bus = int(row['bus'])
+        L = int(row['L'])
         
         if bus <= connect_mtx_PI.shape[0] and connect_mtx_PI[bus-1, :].sum() > 0:  # Load is connected to any PI-line
             if L == 0: # R Load

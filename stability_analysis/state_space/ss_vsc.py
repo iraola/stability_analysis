@@ -174,8 +174,8 @@ def generate_VSC_pu(l_blocks, l_states, d_grid, lp_VSC, connect_fun='append_and_
         
         ss_list = [] # Create list to store SG subsystems blocks 
         x_list = [] # Creat elist to store SG subsystems states
-        num = row['number']
-        bus = row['bus']
+        num = int(row['number'])
+        bus = int(row['bus'])
         num_slk = T_global[T_global['Area'] == row['Area']]['num_slk'].iloc[0]
         element_slk = T_global[T_global['Area'] == row['Area']]['ref_element'].iloc[0]
         REF_w = 'REF_w'
