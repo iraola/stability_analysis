@@ -1,8 +1,11 @@
+import tempfile
 import control as ct
 from stability_analysis.state_space import interconnect
 import pandas as pd
 
-def save_ss_matrices_fun(ss,filename, path='/home/upc/upc848455/probabilistic_contingencies/temp/'):
+def save_ss_matrices_fun(ss,filename, path=None):
+    if path is None:
+        path = tempfile.gettempdir() + "/"
     pd.DataFrame.to_csv(pd.DataFrame(ss.A),path+filename+'_A.csv',index=False,header=False)
     pd.DataFrame.to_csv(pd.DataFrame(ss.B),path+filename+'_B.csv',index=False,header=False)
     pd.DataFrame.to_csv(pd.DataFrame(ss.C),path+filename+'_C.csv',index=False,header=False)
