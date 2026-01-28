@@ -2,7 +2,7 @@
 This repository contains the code for the Python version of the small-signal stability analysis tool presented in [1]. The code of the MATLAB version is available at https://github.com/CITCEA-UPC/STAMP_Public. 
 
 ## Installation
-To install locally: clone the repository, locate yourself inside the directory, and execute the following command
+To install locally: clone the repository (check out to the branch new-GridCal), locate yourself inside the directory, and execute the following command
 
 ```bash
 pip install -e .
