@@ -34,6 +34,8 @@ def fill_d_grid(d_grid, GridCal_grid, d_pf, d_raw_data, d_op, clean_d_grid=True)
     
     d_grid = fill_BUSES(d_grid, d_pf, d_raw_data)
 
+    d_grid = fill_TRAFOS(d_grid, d_raw_data, GridCal_grid)
+
     # Write power-flow data to generator elements tables: T_TH, T_SG, T_VSC, T_user    
     # T_nodes = generate_NET.generate_T_nodes(d_grid)
     
@@ -114,6 +116,7 @@ def fill_GEN(d_grid, d_op, d_raw_data, d_pf, GridCal_grid):
                 d_grid['T_gen'].loc[j,'element']=element        
                 d_grid['T_gen'].loc[j,'Sn']=d_op['Generators'].loc[i,'Snom_{}'.format(element)]
                 d_grid['T_gen'].loc[j,'Area']=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_num').index[0],'AREA']
+                d_grid['T_gen'].loc[j,'SyncArea']=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_num').index[0],'SyncArea']
                 d_grid['T_gen'].loc[j,'state']=1
                 
                 d_grid['T_gen'].loc[j,'P']= d_raw_data['generator'].loc[i,'alpha_P_'+element]*d_pf['pf_gen'].loc[i,'P']
@@ -177,6 +180,7 @@ def fill_VSC(d_grid, d_raw_data):
 def fill_BUSES(d_grid, d_pf, d_raw_data):
     d_grid['T_buses']=d_pf['pf_bus'][['bus','Vm','theta']]
     d_grid['T_buses']['Area']=d_raw_data['results_bus']['AREA']
+    d_grid['T_buses']['SyncArea']=d_raw_data['results_bus']['SyncArea']
     
     return d_grid
             
@@ -287,15 +291,59 @@ def no_gfol_at_slack(d_grid):
     if len(slack_gfol)>0:
         slack_gfor=d_grid['T_gen'].query('bus == @slack_bus and element == "GFOR"')
         
-        for var in ['Sn','P','Q']:
-            slack_gfor.loc[slack_gfor.index[0],var]=slack_gfor.loc[slack_gfor.index[0],var]+slack_gfol.loc[slack_gfol.index[0],var]
+        if len(slack_gfor)==0:
+            df=d_grid['T_gen'].query('element == "GFOR"')
+            
+            try:
+                insert_position = df[df['bus'] > slack_bus].index[0]
+            except:
+                insert_position = df[df['bus'] < slack_bus].index[-1]
+
+            slack_gfor=slack_gfol.copy(deep=True)
+            slack_gfor.loc[slack_gfor.index[0],'element']='GFOR'
+            slack_gfor=slack_gfor.reset_index(drop=True)
+            
+            d_grid['T_gen']=d_grid['T_gen'].drop(slack_gfol.index[0],axis=0)
+            d_grid['T_gen'] = pd.concat([d_grid['T_gen'].iloc[:insert_position], slack_gfor, d_grid['T_gen'].iloc[insert_position:]]).reset_index(drop=True)
+            
+            idx_gfol=d_grid['T_gen'].query('element == "GFOL"').index
+            d_grid['T_gen'].loc[idx_gfol,'number']=np.arange(1,len(idx_gfol)+1)
+            
+            last_gfol=len(idx_gfol)+1
+            idx_gfor=d_grid['T_gen'].query('element == "GFOR"').index
+            d_grid['T_gen'].loc[idx_gfor,'number']=np.arange(last_gfol,last_gfol+len(idx_gfor))
+        else:
+            for var in ['Sn','P','Q']:
+                slack_gfor.loc[slack_gfor.index[0],var]=slack_gfor.loc[slack_gfor.index[0],var]+slack_gfol.loc[slack_gfol.index[0],var]
         
-        i_slack= d_grid['T_gen'].query('bus == @slack_bus and element == "GFOL"').index[0]
-        number_start= d_grid['T_gen'].loc[i_slack,'number']
-        number_end=d_grid['T_gen'].loc[d_grid['T_gen'].index[-1],'number']
-        new_numbers=np.arange(number_start,number_end)
+            i_slack= d_grid['T_gen'].query('bus == @slack_bus and element == "GFOL"').index[0]
+            number_start= d_grid['T_gen'].loc[i_slack,'number']
+            number_end=d_grid['T_gen'].loc[d_grid['T_gen'].index[-1],'number']
+            new_numbers=np.arange(number_start,number_end)
+            
+            d_grid['T_gen']=d_grid['T_gen'].drop(d_grid['T_gen'].query('bus == @slack_bus and element == "GFOL"').index[0],axis=0).reset_index(drop=True)   
+            d_grid['T_gen'].loc[i_slack:,'number']=new_numbers
+            
+            d_grid['T_gen'].loc[i_slack,list(set(d_grid['T_gen'].columns)-set(['number']))]= slack_gfor.loc[slack_gfor.index[0],list(set(d_grid['T_gen'].columns)-set(['number']))]
         
-        d_grid['T_gen']=d_grid['T_gen'].drop(d_grid['T_gen'].query('bus == @slack_bus and element == "GFOL"').index[0],axis=0).reset_index(drop=True)   
-        d_grid['T_gen'].loc[i_slack:,'number']=new_numbers
+    return d_grid
+
+def fill_TRAFOS(d_grid, d_raw_data, GridCal_grid):
+    for idx,trafo in enumerate(GridCal_grid.transformers2w):
+        d_grid['T_trafo'].loc[idx,'number']=idx+1
+        d_grid['T_trafo'].loc[idx,'bus_from']=int(trafo.bus_from.code)
+        d_grid['T_trafo'].loc[idx,'bus_to']=int(trafo.bus_to.code)
+        d_grid['T_trafo'].loc[idx,'R']=trafo.R
+        d_grid['T_trafo'].loc[idx,'X']=trafo.X
+        d_grid['T_trafo'].loc[idx,'B']=trafo.B     
+        d_grid['T_trafo'].loc[idx,'tap_module']=1    
+        d_grid['T_trafo'].loc[idx,'tap_angle']=0     
+        d_grid['T_trafo'].loc[idx,'state']=1    
+        
+        bf=int(trafo.bus_from.code)
+        d_grid['T_trafo'].loc[idx,'Area']=d_grid['T_buses'].loc[d_grid['T_buses'].query('bus == @bf').index[0],'Area']
+        d_grid['T_trafo'].loc[idx,'SyncArea']=d_grid['T_buses'].loc[d_grid['T_buses'].query('bus == @bf').index[0],'SyncArea']
+            
+    d_grid['T_trafo'][["number", "bus_from", "bus_to"]] = d_grid['T_trafo'][["number", "bus_from", "bus_to"]].astype(int)
     
     return d_grid

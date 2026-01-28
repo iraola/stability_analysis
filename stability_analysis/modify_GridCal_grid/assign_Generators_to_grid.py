@@ -115,12 +115,13 @@ def assign_PVGen(**kwargs):
     voltage_profile_list=kwargs.get("voltage_profile_list",None)
     indx_id=kwargs.get("indx_id",None)
     V_set=kwargs.get("V_set",None)
-    for bus in GridCal_grid.get_buses():
+     
+    for gen in GridCal_grid.get_generators():
+        bus=gen.bus
         bus_code=int(bus.code)
         
         if bus_code in list(d_raw_data['generator']['I']):
             if bus.is_slack:
-                gen=bus.generators[0]
 
                 gen.Snom=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Snom']
                 gen.P=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
@@ -140,12 +141,9 @@ def assign_PVGen(**kwargs):
                     gen.Vset=V_set
                 
             else:
-                bus.generators=[]
-                bus.static_generators=[]
                                           
-                gen_name=str(bus.code)#generators[0].name
+                gen_name=bus.code#generators[0].name
                 
-                gen = gce.Generator(gen_name)#voltage_module=1.0,p_min=-Sn_vsc,p_max=Sn_vsc,Snom=Sn_vsc)
                 
                 gen.Snom=d_op['Generators'].loc[d_op['Generators'].query('BusNum == @bus_code').index[0],'Snom']
                 gen.P=d_raw_data['generator'].loc[d_raw_data['generator'].query('I == @bus_code').index[0],'PG']
@@ -164,7 +162,6 @@ def assign_PVGen(**kwargs):
                 elif V_set!=None:
                     gen.Vset=V_set
                 
-                GridCal_grid.add_generator(bus, gen)
                 
 # def assign_V_to_PVGen(GridCal_grid,d_raw_data):
 #     vmin=0.95

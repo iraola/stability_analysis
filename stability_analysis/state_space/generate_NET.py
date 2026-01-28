@@ -4,9 +4,16 @@ import re
 import control as ct
 from control.matlab import ss
 from stability_analysis.preprocess import preprocess_data
+from stability_analysis.state_space import interconnect
 
+def save_ss_matrices_fun(ss,path,filename):
+    pd.DataFrame.to_csv(pd.DataFrame(ss.A),path+filename+'_A.csv',index=False,header=False)
+    pd.DataFrame.to_csv(pd.DataFrame(ss.B),path+filename+'_B.csv',index=False,header=False)
+    pd.DataFrame.to_csv(pd.DataFrame(ss.C),path+filename+'_C.csv',index=False,header=False)
+    pd.DataFrame.to_csv(pd.DataFrame(ss.D),path+filename+'_D.csv',index=False,header=False)
+    
 
-def generate_SS_NET_blocks(d_grid, delta_slk):
+def generate_SS_NET_blocks(d_grid, delta_slk, connect_fun='append_and_connect',save_ss_matrices=False):
     """
     Generate State-Space Blocks for the Power Grid Model.
 
@@ -47,12 +54,14 @@ def generate_SS_NET_blocks(d_grid, delta_slk):
     # Get PI T_nodes
     PI_T_nodes = generate_specific_T_nodes_v2(connect_mtx_PI, T_nodes);
     # Generate the State-Space of the AC RL grid
-    l_blocks, l_states = generate_general_rl_NET_v3(connect_mtx_rl, rl_T_nodes, PI_T_nodes, rl_T_NET, d_grid['T_global'], l_blocks, l_states) 
+    l_blocks, l_states = generate_general_rl_NET_v3(connect_mtx_rl, rl_T_nodes, PI_T_nodes, rl_T_NET, d_grid['T_global'], l_blocks, l_states,
+                                                    connect_fun,save_ss_matrices)
        
     # PI NET         
     PI_T_NET = get_specific_NET(connect_mtx_PI, d_grid['T_NET'])
     # Generates the State-Space of the AC PI grid
-    l_blocks, l_states = generate_general_PI_NET(connect_mtx_PI, connect_mtx_rl, PI_T_nodes, T_trafo_missing, d_grid, l_blocks, l_states)
+    l_blocks, l_states = generate_general_PI_NET(connect_mtx_PI, connect_mtx_rl, PI_T_nodes, T_trafo_missing, d_grid, l_blocks, l_states,
+                                                 connect_fun,save_ss_matrices)
         
     # Trafos 
     l_blocks, l_states = build_trafo(T_trafo_missing, d_grid['T_global']['fb'][0], l_blocks, l_states)
@@ -61,7 +70,8 @@ def generate_SS_NET_blocks(d_grid, delta_slk):
     l_blocks, l_states = build_TH(T_TH_missing, d_grid['T_global']['fb'][0], l_blocks, l_states)   
     
     # Loads
-    l_blocks, l_states = build_load(d_grid['T_load'], connect_mtx_PI, connect_mtx_rl, T_nodes, d_grid['T_global']['fb'][0], delta_slk, l_blocks, l_states)
+    l_blocks, l_states = build_load(d_grid['T_load'], connect_mtx_PI, connect_mtx_rl, T_nodes, d_grid['T_global']['fb'][0], delta_slk, l_blocks, l_states,
+                                    connect_fun,save_ss_matrices)
             
     # DC Grid
     # Generate_DC_connectivity_matrix
@@ -91,7 +101,12 @@ def xb2lc(d_grid):
     """
     
     T_buses = d_grid['T_buses']
-    T_buses['fb'] = d_grid['T_buses']['Area'].map(d_grid['T_global'].set_index('Area')['fb'])    
+#    T_buses['fb'] = d_grid['T_buses']['SyncArea'].map(d_grid['T_global'].set_index('SyncArea')['fb']) 
+    for SyncArea, fb in d_grid['T_global'].set_index('SyncArea')[['fb']].iterrows():
+        # print(SyncArea)
+        # print(fb)
+        
+        T_buses.loc[T_buses.query('SyncArea == @SyncArea').index,'fb'] =  fb[0]
         
     d_grid['T_NET']['L'] = d_grid['T_NET']['X'] / (2 * np.pi * d_grid['T_NET']['bus_from'].map(T_buses.set_index('bus')['fb']))
     d_grid['T_NET']['C'] = d_grid['T_NET']['B'] / (2 * np.pi * d_grid['T_NET']['bus_from'].map(T_buses.set_index('bus')['fb'])) / 2
@@ -112,14 +127,14 @@ def generate_general_connect_mtx(d_grid):
     T_NET = d_grid['T_NET']
     
     # Connectivity Matrix generation:
-    n_nodes = max([max(T_NET['bus_from']), max(T_NET['bus_to'])])
+    n_nodes = int(max([max(T_NET['bus_from']), max(T_NET['bus_to'])]))
     connect_mtx_rl = np.zeros((n_nodes, n_nodes), dtype=np.int8)
     connect_mtx_PI = np.zeros((n_nodes, n_nodes), dtype=np.int8)
     for i in range(len(T_NET)):
         if T_NET['B'][i] == 0:
-            connect_mtx_rl[T_NET['bus_from'][i]-1, T_NET['bus_to'][i]-1] = 1
+            connect_mtx_rl[int(T_NET['bus_from'][i]-1), int(T_NET['bus_to'][i]-1)] = 1
         else:
-            connect_mtx_PI[T_NET['bus_from'][i]-1, T_NET['bus_to'][i]-1] = 1
+            connect_mtx_PI[int(T_NET['bus_from'][i]-1), int(T_NET['bus_to'][i]-1)] = 1
     connect_mtx_rl = connect_mtx_rl + connect_mtx_rl.T
     connect_mtx_PI = connect_mtx_PI + connect_mtx_PI.T
     connect_mtx = connect_mtx_PI + connect_mtx_rl
@@ -144,7 +159,7 @@ def generate_T_nodes(d_grid):
     
     # Total node number 
     tn = max(T_NET['bus_from'].max(), T_NET['bus_to'].max(), T_trafo['bus_from'].max(), T_trafo['bus_to'].max())     
-    nsb = np.zeros(tn)
+    nsb = np.zeros(int(tn))
     for node in range(1, tn+1):
         nsb[node-1] = sum([T_load['bus'].eq(node).sum(), T_TH['bus'].eq(node).sum(), T_SG['bus'].eq(node).sum(), 
                           T_VSC['bus'].eq(node).sum(), T_MMC['NodeAC'].eq(node).sum(),T_user['bus'].eq(node).sum()])
@@ -189,6 +204,48 @@ def generate_T_nodes(d_grid):
     
     return T_nodes
 
+# def add_trafo(d_grid, connect_mtx_rl, connect_mtx_PI):
+        
+#     T_NET = d_grid['T_NET'].copy()
+#     T_trafo = d_grid['T_trafo']
+#     number = np.max(T_NET['number']) + 1    
+#     missing = []
+    
+#     # 1 -  Check if there are trafos in series
+#     buses_series = np.unique(np.concatenate((T_trafo['bus_from'][T_trafo['bus_from'].isin(T_trafo['bus_to'])], T_trafo['bus_to'][T_trafo['bus_to'].isin(T_trafo['bus_from'])])))
+#     buses_AC_NET = np.concatenate((T_NET['bus_from'], T_NET['bus_to']))
+   
+#     if not np.all(np.isin(buses_series, buses_AC_NET)):
+#         raise ValueError("There are trafos in series. Put them as RL lines in AC-NET.")
+#         # Code could be improved to do this automatically
+    
+#     # 2 - Expand connect_mtx with zeros in order to match the size defined by the highest bus in T_trafo
+#     max_bus_trafo = np.max(np.concatenate((T_trafo['bus_from'], T_trafo['bus_to'])))
+#     max_bus_rl_net = connect_mtx_rl.shape[0]
+    
+#     if max_bus_trafo > max_bus_rl_net:
+#         connect_mtx_rl = np.pad(connect_mtx_rl, ((0, max_bus_trafo - max_bus_rl_net), (0, max_bus_trafo - max_bus_rl_net)), mode='constant')
+    
+#     max_bus_pi_net = connect_mtx_PI.shape[0]
+#     if max_bus_trafo > max_bus_pi_net:
+#         connect_mtx_PI = np.pad(connect_mtx_PI, ((0, max_bus_trafo - max_bus_pi_net), (0, max_bus_trafo - max_bus_pi_net)), mode='constant')
+     
+#      # 3 - Add trafos to connectivity matrix  
+#     for i in range(len(T_trafo)):
+#         if T_trafo['B'][i] == 0:
+#             connect_mtx_rl[int(T_trafo['bus_from'][i]-1), int(T_trafo['bus_to'][i]-1)] = 1
+#             connect_mtx_rl[int(T_trafo['bus_to'][i]-1), int(T_trafo['bus_from'][i]-1)] = 1
+#         else:
+#             connect_mtx_PI[int(T_trafo['bus_from'][i]-1), int(T_trafo['bus_to'][i]-1)] = 1
+#             connect_mtx_PI[int(T_trafo['bus_to'][i]-1), int(T_trafo['bus_from'][i]-1)] = 1
+
+#         T_NET.loc[len(T_NET)] = [number, T_trafo['bus_from'][i], T_trafo['bus_to'][i], T_trafo['R'][i], T_trafo['X'][i], 0, 1, T_trafo['L'][i], T_trafo['C'][i]]
+#         number += 1
+
+#     T_trafo_missing = T_trafo.iloc[missing]
+    
+#     return connect_mtx_rl, T_NET, T_trafo_missing
+
 
 def add_trafo(d_grid, connect_mtx_rl, connect_mtx_PI):
         
@@ -219,22 +276,22 @@ def add_trafo(d_grid, connect_mtx_rl, connect_mtx_PI):
      # 3 - Add trafos to connectivity matrix  
     for tf in range(len(T_trafo)):
         # A) Trafos that are connected to an RL line in ANY bus are added to connect_mtx_RL and to T_NET
-        if np.sum(connect_mtx_rl[T_trafo['bus_from'][tf] - 1, :]) > 0 or np.sum(connect_mtx_rl[T_trafo['bus_to'][tf] - 1, :]) > 0:
-            connect_mtx_rl[T_trafo['bus_from'][tf] - 1, T_trafo['bus_to'][tf] - 1] = 1
-            connect_mtx_rl[T_trafo['bus_to'][tf] - 1, T_trafo['bus_from'][tf] - 1] = 1
+        if np.sum(connect_mtx_rl[int(T_trafo['bus_from'][tf] - 1), :]) > 0 or np.sum(connect_mtx_rl[int(T_trafo['bus_to'][tf] - 1), :]) > 0:
+            connect_mtx_rl[int(T_trafo['bus_from'][tf] - 1), int(T_trafo['bus_to'][tf] - 1)] = 1
+            connect_mtx_rl[int(T_trafo['bus_to'][tf] - 1), int(T_trafo['bus_from'][tf] - 1)] = 1
             T_NET.loc[len(T_NET)] = [number, T_trafo['bus_from'][tf], T_trafo['bus_to'][tf], T_trafo['R'][tf], T_trafo['X'][tf], 0, 1, T_trafo['L'][tf], T_trafo['C'][tf]]
             number += 1
         # B) Trafos connected between PI lines in BOTH buses --> "missing"
         # are not added to any connect_mtx because are built as independent elements
-        elif np.sum(connect_mtx_PI[T_trafo['bus_from'][tf] - 1, :]) > 0 and np.sum(connect_mtx_PI[T_trafo['bus_to'][tf] - 1, :]) > 0:
+        elif np.sum(connect_mtx_PI[int(T_trafo['bus_from'][tf] - 1), :]) > 0 and np.sum(connect_mtx_PI[int(T_trafo['bus_to'][tf] - 1), :]) > 0:
             missing.append(tf)
         # C) The Trafo is connected to a PI line and to a terminal element in one of the buses   
         # the terminal element cannot be a current source !!
         else:
             missing.append(tf)
-            print(f"Ensure that Trafo {T_trafo['number'][tf]} is connected to a voltage source.")
-            print("SGs and VSCs are current sources --> Add a Load to the bus.")
-            print("THs are current sources -->  Add the trafo as an RL in AC-NET.")
+            # print(f"Ensure that Trafo {T_trafo['number'][tf]} is connected to a voltage source.")
+            # print("SGs and VSCs are current sources --> Add a Load to the bus.")
+            # print("THs are current sources -->  Add the trafo as an RL in AC-NET.")
 
     T_trafo_missing = T_trafo.iloc[missing]
     
@@ -310,7 +367,7 @@ def get_specific_NET(connect_mtx, T_NET):
 
 # %% GENERATE RL NET
 
-def generate_general_rl_NET_v3(connect_mtx_rl, rl_T_nodes, PI_T_nodes, rl_T_NET, T_global, l_blocks, l_states):
+def generate_general_rl_NET_v3(connect_mtx_rl, rl_T_nodes, PI_T_nodes, rl_T_NET, T_global, l_blocks, l_states, connect_fun='append_and_connect',save_ss_matrices=False):
     
             
     def generate_ss_rl(R1, L1, bus_from, bus_to, f):
@@ -554,10 +611,31 @@ def generate_general_rl_NET_v3(connect_mtx_rl, rl_T_nodes, PI_T_nodes, rl_T_NET,
         
         
         if internal_node:
-            SS_RL = ct.interconnect(list_ss_rl+list_ss_union, states = list_x_rl, inputs = inputs, outputs = outputs, check_unused = False) 
+            if connect_fun=='interconnect':
+                SS_RL = ct.interconnect(list_ss_rl+list_ss_union, states = list_x_rl, inputs = inputs, outputs = outputs, check_unused = False)
+                if save_ss_matrices==True:
+                    save_ss_matrices_fun(SS_RL,'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/'+connect_fun+'_test/',
+                                            f'{SS_RL=}'.split('=')[0])
+            elif connect_fun=='append_and_connect':
+                SS_RL = interconnect.interconnect(list_ss_rl+list_ss_union, states = list_x_rl, inputs = inputs, outputs = outputs, check_unused = False)
+                if save_ss_matrices == True:
+                    save_ss_matrices_fun(SS_RL,
+                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun+'_test/',
+                                          f'{SS_RL=}'.split('=')[0])
         else:
-            SS_RL = ct.interconnect(list_ss_rl, inputs = inputs, outputs = outputs, check_unused = False) 
-                    
+            if connect_fun == 'interconnect':
+                SS_RL = ct.interconnect(list_ss_rl, inputs = inputs, outputs = outputs, check_unused = False)
+                if save_ss_matrices == True:
+                    save_ss_matrices_fun(SS_RL,
+                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                         f'{SS_RL=}'.split('=')[0])
+            elif connect_fun == 'append_and_connect':
+                SS_RL = interconnect.interconnect(list_ss_rl, inputs = inputs, outputs = outputs, check_unused = False)
+
+                if save_ss_matrices == True:
+                    save_ss_matrices_fun(SS_RL,
+                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                         f'{SS_RL=}'.split('=')[0])
         # Append SS to l_blocks
         l_blocks.append(SS_RL)
         l_states.extend(list_x_rl)
@@ -566,7 +644,8 @@ def generate_general_rl_NET_v3(connect_mtx_rl, rl_T_nodes, PI_T_nodes, rl_T_NET,
   
 # %% GENERATE PI NET      
     
-def generate_general_PI_NET(connect_mtx_PI, connect_mtx_rl, PI_T_nodes, T_trafo_missing, d_grid, l_blocks, l_states):   
+def generate_general_PI_NET(connect_mtx_PI, connect_mtx_rl, PI_T_nodes, T_trafo_missing, d_grid, l_blocks, l_states,
+                            connect_fun='append_and_connect',save_ss_matrices=False):
     
     def construccio_SS_Cn( Cn , c_x , c_u , c_y ,f):
         
@@ -811,7 +890,21 @@ def generate_general_PI_NET(connect_mtx_PI, connect_mtx_rl, PI_T_nodes, T_trafo_
                        
         
         # Generate PI NET State-Space
-        PI_NET = ct.interconnect(llista_SS_rl+llista_SS_C+llista_SS_nus, states = llista_x_AC, inputs=llista_u_AC, outputs=llista_y_AC, check_unused = False) 
+        if connect_fun=='interconnect':
+            PI_NET = ct.interconnect(llista_SS_rl + llista_SS_C + llista_SS_nus, states=llista_x_AC, inputs=llista_u_AC,
+                                     outputs=llista_y_AC, check_unused=False)
+
+            if save_ss_matrices == True:
+                save_ss_matrices_fun(PI_NET,
+                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                         f'{PI_NET=}'.split('=')[0])
+        elif connect_fun == 'append_and_connect':
+            PI_NET = interconnect.interconnect(llista_SS_rl + llista_SS_C + llista_SS_nus, states=llista_x_AC, inputs=llista_u_AC,
+                                     outputs=llista_y_AC, check_unused=False)
+            if save_ss_matrices == True:
+                save_ss_matrices_fun(PI_NET,
+                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                     f'{PI_NET=}'.split('=')[0])
         #Append SS to l_blocks 
         l_blocks.append(PI_NET)
         l_states.extend(llista_x_AC)
@@ -892,7 +985,7 @@ def build_TH(T_TH_missing, fb, l_blocks, l_states):
 
 # %% LOADS
 
-def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_blocks, l_states):
+def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_blocks, l_states, connect_fun='append_and_connect', save_ss_matrices=False):
     """        
     Generates the State-Space for each load based on their connection to either ANY PI-line or ALL RL-lines
     
@@ -927,7 +1020,7 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
         return load
     
     
-    def build_Load_in_PI_addR(row,f,delta_slk):
+    def build_Load_in_PI_addR(row,f,delta_slk, connect_fun='append_and_connect',save_ss_matrices=False, n_load=None):
     
         R = row['R']
         L = row['L']
@@ -951,7 +1044,10 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
         
         SS_l = ss(Al, Bl, Cl, Dl, inputs = ul, outputs = yl, states = xl)
         
-        Ar = np.empty(0)   
+        # Ar = np.empty(0)   
+        # Br = np.empty((0,3))
+        # Cr = np.empty((0,2))  
+        Ar = np.zeros(0)   
         Br = np.empty((0,3))
         Cr = np.empty((0,2))  
         Dr = np.array([[1/R, 0, -vq0/(R**2)],[0, 1/R, -vd0/(R**2)]])
@@ -973,9 +1069,24 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
         SS_nus = ss(Anus, Bnus, Cnus, Dnus, inputs = unus, outputs = ynus)       
         
         uLoad = ['NET_vn' + str(nodeAC) + 'q', 'NET_vn' + str(nodeAC) + 'd', 'NET_Rld' + str(number)]
-        load = ct.interconnect([SS_l, SS_r, SS_nus], states = xl, inputs=uLoad, outputs=ynus, check_unused = False) 
-    
-        return load, xl
+        
+        if connect_fun=='interconnect':
+            load = ct.interconnect([SS_l, SS_r, SS_nus], states=xl, inputs=uLoad, outputs=ynus, check_unused=False)
+
+            if save_ss_matrices == True:
+                save_ss_matrices_fun(load,
+                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                         f'{load=}'.split('=')[0]+str(n_load))
+        elif connect_fun == 'append_and_connect':
+            load = interconnect.interconnect([SS_l, SS_r, SS_nus], states=xl, inputs=uLoad, outputs=ynus, check_unused=False)
+
+            
+            if save_ss_matrices == True:
+                save_ss_matrices_fun(load,
+                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                     f'{load=}'.split('=')[0]+str(n_load))
+
+        return load, xl, n_load
     
     def build_Load_in_PI_R(row):
         
@@ -996,7 +1107,7 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
         return load
     
     
-    def build_Load_in_PI(row,f):
+    def build_Load_in_PI(row,f, connect_fun='append_and_connect',save_ss_matrices=False):
         
         R = row['R']
         L = row['L']
@@ -1037,12 +1148,26 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
         SS_nus = ss(Anus, Bnus, Cnus, Dnus, inputs = unus, outputs = ynus)       
         
         uLoad = ['NET_vn' + str(nodeAC) + 'q', 'NET_vn' + str(nodeAC) + 'd']
-        load = ct.interconnect([SS_l, SS_r, SS_nus], states = xl, inputs=uLoad, outputs=ynus, check_unused = False) 
-    
+
+        if connect_fun=='interconnect':
+            load = ct.interconnect([SS_l, SS_r, SS_nus], states=xl, inputs=uLoad, outputs=ynus, check_unused=False)
+
+            if save_ss_matrices == True:
+                save_ss_matrices_fun(load,
+                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                         f'{load=}'.split('=')[0])
+        elif connect_fun == 'append_and_connect':
+            load = interconnect.interconnect([SS_l, SS_r, SS_nus], states=xl, inputs=uLoad, outputs=ynus, check_unused=False)
+
+
+            if save_ss_matrices == True:
+                save_ss_matrices_fun(load,
+                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                     f'{load=}'.split('=')[0])
         return load, xl
     
     
-    def build_Load_in_rl_R_addR(row, Connectivity_Matrix, T_nodes, f, delta_slk):        
+    def build_Load_in_rl_R_addR(row, Connectivity_Matrix, T_nodes, f, delta_slk, connect_fun='append_and_connect',save_ss_matrices=False):
 
         nodeAC = int(row['bus'])
         number = int(row['number'])
@@ -1112,12 +1237,25 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
     
         uLoad = unus + ['NET_Rld'+str(number)]
         yLoad = yr
-        load = ct.interconnect([SS_r, SS_nus], inputs=uLoad, outputs=yLoad, check_unused=False)
-    
+
+        if connect_fun=='interconnect':
+            load = ct.interconnect([SS_r, SS_nus], inputs=uLoad, outputs=yLoad, check_unused=False)
+
+            if save_ss_matrices == True:
+                save_ss_matrices_fun(load,
+                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                         f'{load=}'.split('=')[0])
+        elif connect_fun == 'append_and_connect':
+            load = interconnect.interconnect([SS_r, SS_nus], inputs=uLoad, outputs=yLoad, check_unused=False)
+
+            if save_ss_matrices == True:
+                save_ss_matrices_fun(load,
+                                     'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                     f'{load=}'.split('=')[0])
         return load
         
     
-    def build_Load_in_rl(row, Connectivity_Matrix, T_nodes, f):
+    def build_Load_in_rl(row, Connectivity_Matrix, T_nodes, f, connect_fun='append_and_connect',save_ss_matrices=False):
         
         nodeAC = int(row['bus'])
         number = int(row['number'])
@@ -1202,9 +1340,22 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
     
             uLoad = unus
             yLoad = ['NET_vn' + str(nodeAC) + 'q', 'NET_vn' + str(nodeAC) + 'd']
-    
-            load = ct.interconnect([SS_r, SS_nus_rl, SS_l, SS_nus], states=xl, inputs=uLoad, outputs=yLoad)
-    
+            if connect_fun == 'interconnect':
+                load = ct.interconnect([SS_r, SS_nus_rl, SS_l, SS_nus], states=xl, inputs=uLoad, outputs=yLoad)
+
+                if save_ss_matrices == True:
+                    save_ss_matrices_fun(load,
+                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                         f'{load=}'.split('=')[0])
+            elif connect_fun == 'append_and_connect':
+                load = interconnect.interconnect([SS_r, SS_nus_rl, SS_l, SS_nus], states=xl, inputs=uLoad, outputs=yLoad)
+
+                if save_ss_matrices == True:
+                    save_ss_matrices_fun(load,
+                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                         f'{load=}'.split('=')[0])
+
+
         else:
             Ar = np.empty(0)   
             Br = np.empty((0,2))
@@ -1218,13 +1369,27 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
             uLoad = unus
             yLoad = yr
 
-            load = ct.interconnect([SS_r, SS_nus], inputs=uLoad, outputs=yLoad)     
-        
+            if connect_fun == 'interconnect':
+                load = ct.interconnect([SS_r, SS_nus], inputs=uLoad, outputs=yLoad)
+
+                if save_ss_matrices == True:
+                    save_ss_matrices_fun(load,
+                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                         f'{load=}'.split('=')[0])
+            elif connect_fun == 'append_and_connect':
+                load = interconnect.interconnect([SS_r, SS_nus], inputs=uLoad, outputs=yLoad)
+
+                if save_ss_matrices == True:
+                    save_ss_matrices_fun(load,
+                                         'C:/Users/Francesca/miniconda3/envs/gridcal_original/hp2c-dt/' + connect_fun + '_test/',
+                                         f'{load=}'.split('=')[0])
+
+
         return load, xl
     
     
     # Call the appropiate function according to the load type
-    
+    n_load=0
     for _,row in T_load.iterrows():
         
         bus = row['bus']
@@ -1237,20 +1402,22 @@ def build_load(T_load, connect_mtx_PI, connect_mtx_rl, T_nodes, f, delta_slk, l_
                 l_blocks.append(load)
             else: # RL load
                 #load, states = build_Load_in_PI(row,f) # R is CONSTANT
-                load, states = build_Load_in_PI_addR(row,f,delta_slk) # R is INPUT
+                load, states, n_load= build_Load_in_PI_addR(row,f,delta_slk, connect_fun, save_ss_matrices, n_load) # R is INPUT
                 l_blocks.append(load)
                 l_states.extend(states)
                 
         else: # Load is connected to all RL-lines
             if L == 0: # R Load
-                load = build_Load_in_rl_R_addR(row, connect_mtx_rl, T_nodes, f, delta_slk) # R is INPUT 
+                load = build_Load_in_rl_R_addR(row, connect_mtx_rl, T_nodes, f, delta_slk, connect_fun,save_ss_matrices) # R is INPUT
                 l_blocks.append(load)
             else:  # R or RL Load
-                load, states = build_Load_in_rl(row, connect_mtx_rl, T_nodes, f) # R is CONSTANT  
+                load, states = build_Load_in_rl(row, connect_mtx_rl, T_nodes, f, connect_fun,save_ss_matrices) # R is CONSTANT
                 l_blocks.append(load)
                 if states:
                     l_states.extend(states)
    
+        n_load=n_load+1
+
     return l_blocks, l_states
 
 # %% DC NET

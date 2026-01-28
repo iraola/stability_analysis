@@ -33,6 +33,7 @@ def preprocess_raw(d_raw_data):
                 default_values = {
                     'BASKV': df['BASKV'][0],
                     'Sb_MVA': df['Sb_MVA'][0],
+                    'SyncArea': df['SyncArea'][0],
                     'f_Hz': df['f_Hz'][0],
                     'ref_bus': df['ref_bus'][0],
                     'ref_element': 'UNDEFINED'}        
@@ -40,7 +41,7 @@ def preprocess_raw(d_raw_data):
                 unique_area_baskv = d_raw_data['results_bus'][['AREA', 'BASKV']].drop_duplicates()
                                 
                 # Merge the two DataFrames based on 'AREA' column to match 'BASKV' values
-                df = df.merge(unique_area_baskv, on='AREA', how = 'left')                
+                df = df.merge(unique_area_baskv, on='AREA', how = 'right')                
                 # Drop the redundant 'BASKV_y' column and rename 'BASKV_x' to 'BASKV'
                 df['BASKV_x'] = df['BASKV_y']
                 df = df.drop(columns=['BASKV_y']).rename(columns={'BASKV_x': 'BASKV'})             
