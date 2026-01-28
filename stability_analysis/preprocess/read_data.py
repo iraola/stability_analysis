@@ -156,7 +156,7 @@ def tempTables(grid):
 
 #%%
 
-def read_data(file_path):
+def read_data(file_path,create_T_table=False):
     # Create an empty dictionary to store DataFrames
     d_op = {}
 
@@ -169,7 +169,9 @@ def read_data(file_path):
         df = xl.parse(sheet_name)
         
         # Store the DataFrame in the dictionary with sheet name as key
-        d_op[sheet_name] = df
-
+        if create_T_table:
+            d_op['T_'+sheet_name] = df
+        else:
+            d_op[sheet_name] = df
     return d_op
 

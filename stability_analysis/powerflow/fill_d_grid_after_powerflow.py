@@ -10,9 +10,10 @@ import pandas as pd
 
 from stability_analysis.state_space import generate_NET
 
-def fill_d_grid(d_grid, GridCal_grid, d_pf, d_raw_data, d_op):
+def fill_d_grid(d_grid, GridCal_grid, d_pf, d_raw_data, d_op, clean_d_grid=True):
     
-    d_grid=clean_d_grid_df(d_grid)
+    if clean_d_grid:
+        d_grid=clean_d_grid_df(d_grid)
     
     d_raw_data= change_d_raw_data_columns_name(d_raw_data)
      
