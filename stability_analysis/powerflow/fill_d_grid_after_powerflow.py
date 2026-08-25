@@ -320,10 +320,11 @@ def no_gfol_at_slack(d_grid):
             number_end=d_grid['T_gen'].loc[d_grid['T_gen'].index[-1],'number']
             new_numbers=np.arange(number_start,number_end)
             
-            d_grid['T_gen']=d_grid['T_gen'].drop(d_grid['T_gen'].query('bus == @slack_bus and element == "GFOL"').index[0],axis=0).reset_index(drop=True)   
+            d_grid['T_gen']=d_grid['T_gen'].drop(d_grid['T_gen'].query('bus == @slack_bus and element == "GFOL"').index[0],axis=0)#.reset_index(drop=True)   
             d_grid['T_gen'].loc[i_slack:,'number']=new_numbers
             
-            d_grid['T_gen'].loc[i_slack,list(set(d_grid['T_gen'].columns)-set(['number']))]= slack_gfor.loc[slack_gfor.index[0],list(set(d_grid['T_gen'].columns)-set(['number']))]
+            d_grid['T_gen'].loc[slack_gfor.index[0],list(set(d_grid['T_gen'].columns)-set(['number']))]= slack_gfor.loc[slack_gfor.index[0],list(set(d_grid['T_gen'].columns)-set(['number']))]
+            d_grid['T_gen'] = d_grid['T_gen'].reset_index(drop=True)
         
     return d_grid
 
